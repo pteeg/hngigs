@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "hngigs-8a8b8"
+    "default": "hngigs-8a8b8",
+    "production": "hngigs-8a8b8",
+    "dev": "hngigs-dev"
   }
 }

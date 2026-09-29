@@ -17,6 +17,7 @@ function formFromArtist(artist) {
     name: artist?.name ?? '',
     tagline: artist?.tagline ?? '',
     bio: artist?.bio ?? '',
+    actType: artist?.actType === 'dj' ? 'dj' : 'live',
     contact: { ...EMPTY_CONTACT, ...artist?.contact },
     media: artist?.media ? [...artist.media] : [],
   }
@@ -79,6 +80,7 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
         tagline: form.tagline,
         contact: form.contact,
         bio: form.bio,
+        actType: form.actType,
         media: form.media,
         files: pendingFiles,
       })
@@ -176,6 +178,31 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
             autoFocus
             required
           />
+        </div>
+
+        <div className="artist-form-field">
+          <span className="field-label" id="artist-form-type">Type</span>
+          <div className="act-toggle" role="radiogroup" aria-labelledby="artist-form-type">
+            <span className={'act-toggle-thumb' + (form.actType === 'dj' ? ' is-dj' : '')} aria-hidden="true" />
+            <button
+              type="button"
+              role="radio"
+              aria-checked={form.actType === 'live'}
+              className={form.actType === 'live' ? 'active' : ''}
+              onClick={() => setField('actType', 'live')}
+            >
+              Live music
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={form.actType === 'dj'}
+              className={form.actType === 'dj' ? 'active' : ''}
+              onClick={() => setField('actType', 'dj')}
+            >
+              DJ
+            </button>
+          </div>
         </div>
 
         {editing && (

@@ -267,7 +267,7 @@ export function ArtistsProvider({ children }) {
     })
   }, [replaceArtist])
 
-  const saveArtist = useCallback(async ({ id, name, tagline, contact, bio, media = [], files = [] }) => {
+  const saveArtist = useCallback(async ({ id, name, tagline, contact, bio, media = [], files = [], actType }) => {
     const trimmed = name.trim()
     if (!trimmed) return null
     const added = files.length ? await Promise.all(Array.from(files).map(fileToMediaItem)) : []
@@ -292,6 +292,7 @@ export function ArtistsProvider({ children }) {
         bio: bio || '',
         media: nextMedia,
         links: current.links || [],
+        actType: actType === 'dj' ? 'dj' : 'live',
       }
       next.assets = assetsFromArtist(next)
       setArtists((list) => list.map((artist) => (artist.id === id ? next : artist)))
@@ -305,6 +306,7 @@ export function ArtistsProvider({ children }) {
       bio,
       tagline,
       media: nextMedia,
+      actType,
       uploadToken: newUploadToken(),
     })
     setArtists((list) => [...list, next])

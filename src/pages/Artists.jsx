@@ -4,7 +4,7 @@ import { useArtists } from '../context/ArtistsContext'
 import AssetPill from '../components/AssetPill'
 import ArtistFormModal from '../components/ArtistFormModal'
 import GetLinkModal from '../components/GetLinkModal'
-import { assetsFromArtist } from '../data/artists'
+import { actTypeOf, assetsFromArtist } from '../data/artists'
 import { IconChevronRight, IconLink, IconPlus, IconSearch } from '@tabler/icons-react'
 
 const FILTERS = [
@@ -12,6 +12,12 @@ const FILTERS = [
   { key: 'complete', label: 'Complete' },
   { key: 'progress', label: 'In progress' },
   { key: 'awaiting', label: 'Awaiting' },
+]
+
+const ACT_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'live', label: 'Live' },
+  { key: 'dj', label: 'DJ' },
 ]
 
 const TINT_COUNT = 5
@@ -28,6 +34,7 @@ export default function Artists() {
   const [formOpen, setFormOpen] = useState(false)
   const [request, setRequest] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [actFilter, setActFilter] = useState('all')
   const [search, setSearch] = useState('')
 
   const counts = useMemo(() => {
@@ -38,13 +45,22 @@ export default function Artists() {
     return next
   }, [artists])
 
+  const actCounts = useMemo(() => {
+    const next = { all: artists.length, live: 0, dj: 0 }
+    artists.forEach((artist) => {
+      next[actTypeOf(artist)] += 1
+    })
+    return next
+  }, [artists])
+
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase()
     return artists
       .map((artist, index) => ({ artist, tint: index % TINT_COUNT }))
       .filter(({ artist }) => filter === 'all' || artistStatus(artist) === filter)
+      .filter(({ artist }) => actFilter === 'all' || actTypeOf(artist) === actFilter)
       .filter(({ artist }) => !q || artist.name.toLowerCase().includes(q))
-  }, [artists, filter, search])
+  }, [artists, filter, actFilter, search])
 
   function requestAssets(event, artist) {
     event.preventDefault()
@@ -71,20 +87,37 @@ export default function Artists() {
 
       <div className="page-content">
         <div className="list-toolbar">
-          <div className="seg-tabs" role="tablist" aria-label="Filter artists">
-            {FILTERS.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={filter === key}
-                className={'seg-tab' + (filter === key ? ' active' : '')}
-                onClick={() => setFilter(key)}
-              >
-                {label}
-                <span className="seg-count">{counts[key]}</span>
-              </button>
-            ))}
+          <div className="list-filters">
+            <div className="seg-tabs" role="tablist" aria-label="Filter by assets">
+              {FILTERS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === key}
+                  className={'seg-tab' + (filter === key ? ' active' : '')}
+                  onClick={() => setFilter(key)}
+                >
+                  {label}
+                  <span className="seg-count">{counts[key]}</span>
+                </button>
+              ))}
+            </div>
+            <div className="seg-tabs" role="tablist" aria-label="Filter by live music or DJ">
+              {ACT_FILTERS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={actFilter === key}
+                  className={'seg-tab' + (actFilter === key ? ' active' : '')}
+                  onClick={() => setActFilter(key)}
+                >
+                  {label}
+                  <span className="seg-count">{actCounts[key]}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <label className="search-pill">
             <IconSearch size={17} stroke={1.5} aria-hidden="true" />

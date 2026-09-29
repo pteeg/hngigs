@@ -486,6 +486,13 @@ input::placeholder, textarea::placeholder { color: var(--label); }
   flex-wrap: wrap;
 }
 
+.list-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .seg-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -1092,6 +1099,47 @@ input.input-bare:focus {
 
 .artist-form-field .btn {
   align-self: flex-start;
+}
+
+.act-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  background: var(--chip-idle);
+  border-radius: var(--r-pill);
+}
+
+.act-toggle-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  transition: transform 0.18s ease;
+}
+
+.act-toggle-thumb.is-dj {
+  transform: translateX(100%);
+}
+
+.act-toggle button {
+  position: relative;
+  z-index: 1;
+  height: 36px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.act-toggle button.active {
+  color: var(--card);
 }
 
 /* Empty states */

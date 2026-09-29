@@ -1,5 +1,5 @@
 import { doc, writeBatch, setDoc, Timestamp } from 'firebase/firestore'
-import { assetsFromArtist, withHttps } from '../data/artists'
+import { actTypeOf, assetsFromArtist, withHttps } from '../data/artists'
 import { db } from './firebase'
 
 const MAX_MEDIA = 6
@@ -80,6 +80,7 @@ export function prepareArtist(artist) {
     uploadToken: text(artist.uploadToken, 64),
     linkGeneratedAt: millis(artist.linkGeneratedAt),
     submittedAt: millis(artist.submittedAt),
+    actType: actTypeOf(artist),
   }
   next.assets = assetsFromArtist(next)
   return next
@@ -115,6 +116,7 @@ export function toArtistDoc(artist) {
     uploadToken: ready.uploadToken,
     linkGeneratedAt: asTimestamp(ready.linkGeneratedAt),
     submittedAt: asTimestamp(ready.submittedAt),
+    actType: ready.actType,
   }
 }
 
@@ -144,6 +146,7 @@ export function fromArtistDoc(id, data) {
     spotify: data.contact?.spotify || '',
     youtube: data.contact?.youtube || '',
   }
+  artist.actType = actTypeOf(artist)
   return artist
 }
 

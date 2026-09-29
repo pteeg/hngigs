@@ -228,6 +228,10 @@ export function newUploadToken() {
   return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10)
 }
 
+export function actTypeOf(artist) {
+  return artist?.actType === 'dj' ? 'dj' : 'live'
+}
+
 export function createArtist(name, {
   id,
   uploadToken,
@@ -237,6 +241,7 @@ export function createArtist(name, {
   tagline,
   media,
   links,
+  actType,
 } = {}) {
   const trimmed = name.trim()
   const artist = {
@@ -258,6 +263,7 @@ export function createArtist(name, {
     gigHistory: [],
     uploadToken: uploadToken || newUploadToken(),
     linkGeneratedAt,
+    actType: actType === 'dj' ? 'dj' : 'live',
   }
   artist.assets = assetsFromArtist(artist)
   return artist

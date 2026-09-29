@@ -246,7 +246,8 @@ service cloud.firestore {
     function isValidArtist(data) {
       return data.keys().hasOnly([
           'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
-          'media', 'links', 'gigHistory', 'uploadToken', 'linkGeneratedAt', 'submittedAt'
+          'media', 'links', 'gigHistory', 'uploadToken', 'linkGeneratedAt', 'submittedAt',
+          'actType'
         ])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 120
         && data.initials is string && data.initials.size() >= 1 && data.initials.size() <= 4
@@ -261,7 +262,8 @@ service cloud.firestore {
         && data.uploadToken is string
         && data.uploadToken.matches('^[A-Za-z0-9]{8,64}$')
         && isOptionalTimestamp(data.linkGeneratedAt)
-        && isOptionalTimestamp(data.submittedAt);
+        && isOptionalTimestamp(data.submittedAt)
+        && (!('actType' in data) || data.actType in ['live', 'dj']);
     }
 
     function isValidVenue(data) {

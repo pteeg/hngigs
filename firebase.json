@@ -11,7 +11,9 @@
     "authorizedDomains": [
       "localhost",
       "hngigs-8a8b8.firebaseapp.com",
-      "hngigs-8a8b8.web.app"
+      "hngigs-8a8b8.web.app",
+      "hngigs-dev.firebaseapp.com",
+      "hngigs-dev.web.app"
     ]
   },
   "firestore": {
