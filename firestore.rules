@@ -43,6 +43,8 @@ rules_version = '2';
 // Document ID: same slug as artists
 // Public projection of an artist with no email, phone, or upload token.
 // Access: anyone may get a kit by id. Nobody may list them. Only staff may write.
+// The syncPublicKit Cloud Function (functions/index.js) also writes kits from tokens
+// through the Admin SDK, which bypasses these rules.
 //
 // Collection: tokens
 // Document ID: the unguessable upload token
@@ -50,10 +52,34 @@ rules_version = '2';
 // Access: anyone who knows the token may get and update the editable public fields.
 // Only staff may list tokens or create them.
 //
+// Collection: events
+// Document ID: auto id
+// Fields:
+//   - type: string enum (upload_link_opened, returned_visit, media_added, bio_edited,
+//     links_added, assets_saved, preview_shown, gift_link_copied, private_link_copied,
+//     waitlist_answered, public_kit_viewed, staff_asset_downloaded)
+//   - artistId: slug of an artist that has a publicKits document
+//   - sessionId: string 8-64, random per browser tab session
+//   - meta: map, only photos, videos, media, links, bioLength, seconds (ints),
+//     referrer (string <= 200), answer (waitlist enum), kind ("all" | "photos")
+//   - ts: timestamp, must equal request.time
+// Access: anyone may create. Only staff may read. Nobody may update or delete.
+//
+// Collection: waitlist
+// Document ID: auto id
+// Fields:
+//   - artistId: slug of an artist that has a publicKits document
+//   - answer: "yes" | "not_now" | "no"
+//   - reason: string <= 300
+//   - email: optional valid email <= 120 (PII)
+//   - createdAt: timestamp, must equal request.time
+// Access: anyone may create. Only staff may read. Nobody may update or delete.
+//
 // Queries the app runs:
 //   - staff: list artists (no where/orderBy) via onSnapshot, because the CRM is a shared live list
 //   - staff: list tokens (no where/orderBy) via onSnapshot, to fold artist-link edits into the CRM
 //   - public: get publicKits/{id} and get tokens/{token} only
+//   - anyone: create events and waitlist documents (addDoc, no reads)
 //
 // ===============================================================
 
@@ -302,6 +328,55 @@ service cloud.firestore {
         && (data.invitedEmails.size() < 30 || isValidEmail(data.invitedEmails[29]));
     }
 
+    function kitExists(artistId) {
+      return artistId is string
+        && artistId.matches('^[a-z0-9-]{1,80}$')
+        && exists(/databases/$(database)/documents/publicKits/$(artistId));
+    }
+
+    function optionalCount(m, key, max) {
+      return !(key in m) || (m[key] is int && m[key] >= 0 && m[key] <= max);
+    }
+
+    function isValidEventMeta(meta) {
+      return meta is map
+        && meta.keys().hasOnly(['photos', 'videos', 'media', 'links', 'bioLength', 'seconds', 'referrer', 'answer', 'kind'])
+        && optionalCount(meta, 'photos', 1000)
+        && optionalCount(meta, 'videos', 1000)
+        && optionalCount(meta, 'media', 1000)
+        && optionalCount(meta, 'links', 1000)
+        && optionalCount(meta, 'bioLength', 8000)
+        && optionalCount(meta, 'seconds', 2592000)
+        && (!('referrer' in meta) || (meta.referrer is string && meta.referrer.size() > 0 && meta.referrer.size() <= 200))
+        && (!('answer' in meta) || meta.answer in ['yes', 'not_now', 'no'])
+        && (!('kind' in meta) || meta.kind in ['all', 'photos']);
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasOnly(['type', 'artistId', 'sessionId', 'meta', 'ts'])
+        && data.type in [
+          'upload_link_opened', 'returned_visit', 'media_added', 'bio_edited',
+          'links_added', 'assets_saved', 'preview_shown', 'gift_link_copied',
+          'private_link_copied', 'waitlist_answered', 'public_kit_viewed',
+          'staff_asset_downloaded'
+        ]
+        && data.sessionId is string
+        && data.sessionId.matches('^[A-Za-z0-9-]{8,64}$')
+        && isValidEventMeta(data.meta)
+        && data.ts == request.time
+        && kitExists(data.artistId);
+    }
+
+    function isValidWaitlistEntry(data) {
+      return data.keys().hasOnly(['artistId', 'answer', 'reason', 'email', 'createdAt'])
+        && data.answer in ['yes', 'not_now', 'no']
+        && data.reason is string
+        && data.reason.size() <= 300
+        && (!('email' in data) || isValidEmail(data.email))
+        && data.createdAt == request.time
+        && kitExists(data.artistId);
+    }
+
     function anonymousTokenEdit() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt'
@@ -365,6 +440,18 @@ service cloud.firestore {
         && request.resource.data.artistId == resource.data.artistId
         && (isStaff() || anonymousTokenEdit());
       allow delete: if isStaff();
+    }
+
+    match /events/{eventId} {
+      allow get, list: if isStaff();
+      allow create: if isValidEvent(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /waitlist/{entryId} {
+      allow get, list: if isStaff();
+      allow create: if isValidWaitlistEntry(request.resource.data);
+      allow update, delete: if false;
     }
   }
 }

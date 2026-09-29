@@ -587,6 +587,73 @@ input.input-bare:focus {
   box-shadow: var(--shadow-card);
 }
 
+/* Pilot */
+.pilot-card {
+  overflow-x: auto;
+}
+
+.pilot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+  color: var(--text);
+}
+
+.pilot-table th,
+.pilot-table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.pilot-table thead th {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--label);
+  white-space: nowrap;
+}
+
+.pilot-table tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.pilot-table tbody th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pilot-table tbody th a {
+  color: var(--text);
+}
+
+.pilot-sub {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.pilot-reason {
+  max-width: 260px;
+  overflow-wrap: anywhere;
+}
+
+.pilot-no {
+  color: var(--muted);
+}
+
+.pilot-error {
+  font-size: var(--fs-sm);
+  color: var(--red-ink);
+}
+
+.pilot-note {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
 .list-empty {
   padding: 48px;
   text-align: center;
@@ -815,12 +882,6 @@ input.input-bare:focus {
   justify-content: center;
   gap: 10px;
   font-size: var(--fs-md);
-}
-
-.btn.is-saved,
-.btn.is-saved:hover {
-  background: var(--ok-ink);
-  color: var(--card);
 }
 
 .btn:disabled {
@@ -1353,6 +1414,139 @@ textarea.upload-bio {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Artist upload confirmation */
+.upload-card.upload-done {
+  padding: 28px;
+  gap: 16px;
+}
+
+.upload-done-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.upload-done-head h1 {
+  font-size: var(--fs-lead);
+  letter-spacing: -0.02em;
+}
+
+.upload-done > .btn {
+  align-self: flex-start;
+}
+
+.upload-kit-label,
+.upload-gift-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.upload-kit-label {
+  padding: 8px 8px 0;
+}
+
+.upload-gift-label {
+  color: var(--red);
+}
+
+.upload-edit-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.upload-waitlist {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upload-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.upload-choices .btn {
+  height: 44px;
+  padding: 0 18px;
+  font-size: var(--fs-base);
+}
+
+.upload-hint {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.upload-waitlist-send {
+  align-self: flex-start;
+}
+
+.pk.pk-is-preview {
+  border-radius: var(--r-hero);
+}
+
+.pk-is-preview .pk-body {
+  padding: 16px;
+}
+
+.pk-is-preview .pk-hero {
+  height: 380px;
+  border-radius: var(--r-card);
+}
+
+.pk-is-preview .pk-hero-overlay {
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  gap: 16px;
+}
+
+.pk-is-preview .pk-name {
+  font-size: clamp(40px, 11vw, 64px);
+}
+
+.pk-is-preview .pk-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pk-is-preview .pk-panel {
+  position: static;
+}
+
+.pk-is-preview .pk-masonry {
+  column-count: 2;
+}
+
+@media (max-width: 560px) {
+  .upload-page {
+    padding: 24px 12px 80px;
+  }
+
+  .upload-card.upload-done {
+    padding: 24px 20px;
+  }
+
+  .upload-choices .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .upload-waitlist-send {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .pk-is-preview .pk-hero {
+    height: 320px;
+  }
 }
 
 /* File rows */

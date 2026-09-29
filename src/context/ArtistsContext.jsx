@@ -3,7 +3,6 @@ import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import {
-  artists as seedArtists,
   assetsFromArtist,
   createArtist,
   fileToMediaItem,
@@ -26,18 +25,6 @@ import {
 import { useAuth } from './AuthContext'
 
 const ArtistsContext = createContext(null)
-const STORAGE_KEY = 'hn-gigs-artists-v1'
-
-function readLocalArtists() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    const parsed = raw ? JSON.parse(raw) : null
-    if (Array.isArray(parsed) && parsed.length) return parsed
-  } catch {
-    // Fall back to the built-in seed if this browser has no saved artists.
-  }
-  return seedArtists
-}
 
 export function ArtistsProvider({ children }) {
   const { user, ready: authReady, setError } = useAuth()
@@ -48,7 +35,6 @@ export function ArtistsProvider({ children }) {
   const [ready, setReady] = useState(false)
   const pending = useRef(new Map())
   const artistsRef = useRef([])
-  const seeded = useRef(false)
 
   useEffect(() => {
     artistsRef.current = artists
@@ -146,15 +132,6 @@ export function ArtistsProvider({ children }) {
       unsubTokens()
     }
   }, [applyRemote, authReady, publicId, setError, uploadToken, user])
-
-  useEffect(() => {
-    if (!user || !ready || artists.length || seeded.current) return
-    seeded.current = true
-    const local = readLocalArtists()
-    Promise.all(local.map((artist) => saveArtistRecord({ ...artist, uploadToken: artist.uploadToken || newUploadToken() }))).catch(() => {
-      seeded.current = false
-    })
-  }, [artists.length, ready, user])
 
   const persist = useCallback((artist, previousToken) => {
     pending.current.set(artist.id, artist)

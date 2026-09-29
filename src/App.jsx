@@ -8,6 +8,7 @@ import Artists from './pages/Artists'
 import PressKit from './pages/PressKit'
 import ArtistUpload from './pages/ArtistUpload'
 import Settings from './pages/Settings'
+import Pilot from './pages/Pilot'
 import './index.css'
 
 function StaffApp() {
@@ -20,6 +21,7 @@ function StaffApp() {
             <Route path="/" element={<Navigate to="/artists" replace />} />
             <Route path="/artists" element={<Artists />} />
             <Route path="/artists/:id" element={<PressKit />} />
+            <Route path="/pilot" element={<Pilot />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
