@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+body{margin:0;background:#DAD5CD;font-family:'Manrope',system-ui,sans-serif;color:#1B1A18;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1B1A18;text-decoration:none}a:hover{color:#D7322B}
+input,textarea,button{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#A39D93}
+</style>
+</helmet>
+
+<section style="padding:64px;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;flex-direction:column;gap:8px;max-width:900px">
+    <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#7A756D">Turn 1 · Artist profile</div>
+    <div style="font-size:30px;font-weight:700;letter-spacing:-0.03em">Three ways to present an artist</div>
+    <div style="font-size:16px;color:#6E685F;line-height:1.5"><a href="#1a" style="font-weight:700">1a</a> and <a href="#1b" style="font-weight:700">1b</a> are internal views for the Hot Numbers team. <a href="#1c" style="font-weight:700">1c</a> is an external press kit built from the same assets. Use the Tweaks panel to switch to an artist with missing assets.</div>
+  </div>
+
+  <div style="display:flex;gap:56px;flex-wrap:wrap;align-items:flex-start">
+
+  <!-- 1a -->
+  <div id="1a" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="height:30px;padding:0 12px;border-radius:999px;background:#1B1A18;color:#FFFFFF;font-weight:800;font-size:14px;display:flex;align-items:center">1a</span>
+      <span style="font-size:16px;font-weight:600">Dashboard: everything at a glance</span>
+    </div>
+    <div style="width:1280px;background:#E9E5DE;border-radius:28px;padding:36px;display:flex;flex-direction:column;gap:24px">
+      <header style="display:flex;align-items:center;gap:20px">
+        <div style="width:72px;height:72px;border-radius:999px;background:#FBE1DE;color:#B8271F;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px">LB</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:13px;color:#7A756D;display:flex;align-items:center;gap:6px"><i class="ph ph-arrow-left"></i>All artists</div>
+          <h1 style="margin:0;font-size:40px;font-weight:700;letter-spacing:-0.035em;line-height:1.05">Laura Birch</h1>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ copyLink }}" style="display:flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:14px;font-weight:600;cursor:pointer"><i class="ph ph-link-simple" style="font-size:16px"></i>{{ linkLabel }}</button>
+          <button style="display:flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer"><i class="ph ph-pencil-simple" style="font-size:16px"></i>Edit</button>
+        </div>
+      </header>
+
+      <div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px">
+        <div style="grid-column:span 8;position:relative;height:420px;border-radius:28px;overflow:hidden;background:repeating-linear-gradient(135deg,#232220 0 14px,#2A2926 14px 28px);display:flex;align-items:center;justify-content:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#8A847A">hero press photo</span>
+          <span style="position:absolute;top:18px;left:18px;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,0.14);color:#FFFFFF;font-size:11px;font-weight:700;letter-spacing:0.1em;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-star" style="font-size:12px;color:#F2C94C"></i>HERO</span>
+          <div style="position:absolute;left:18px;right:18px;bottom:18px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:#C9C3B9">Press photo · uploaded 14 Oct</span>
+            <div style="display:flex;gap:6px">
+              <button style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:none;background:rgba(255,255,255,0.12);color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-download-simple" style="font-size:15px"></i>Download</button>
+              <button style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Share media</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="grid-column:span 4;background:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:15px;font-weight:700">Assets</div>
+              <div style="font-size:13px;color:#8A847A">{{ doneCount }} of {{ totalCount }} received</div>
+            </div>
+            <div style="font-size:36px;font-weight:700;letter-spacing:-0.04em;line-height:1">{{ pct }}<span style="font-size:18px;color:#A39D93">%</span></div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="5">
+              <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}"><span style="flex:1;height:8px;border-radius:999px;background:#2E5E35"></span></sc-if>
+              <sc-if value="{{ c.missing }}"><span style="flex:1;height:8px;border-radius:999px;background:#EAE5DD"></span></sc-if>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+            <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #F1EDE7">
+                <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}"><span style="width:24px;height:24px;border-radius:999px;background:#E6EFE2;color:#2E5E35;display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-check" style="font-size:12px"></i></span></sc-if>
+                <sc-if value="{{ c.missing }}"><span style="width:24px;height:24px;border-radius:999px;border:1.5px dashed #D3CCC1"></span></sc-if>
+                <span style="flex:1;font-size:14px;font-weight:600">{{ c.label }}</span>
+                <span style="font-size:12px;color:#8A847A">{{ c.meta }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hasGaps }}">
+            <button onClick="{{ remind }}" style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:999px;border:none;background:#D7322B;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer"><i class="ph ph-bell-ringing" style="font-size:16px"></i>{{ remindLabel }}</button>
+          </sc-if>
+          <sc-if value="{{ noGaps }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:999px;background:#E6EFE2;color:#2E5E35;font-size:14px;font-weight:600"><i class="ph-bold ph-check" style="font-size:14px"></i>Ready to promote</div>
+          </sc-if>
+        </div>
+
+        <div style="grid-column:span 5;background:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:700">Bio</div>
+          <sc-if value="{{ hasBio }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:0;font-size:15px;line-height:1.65;color:#2B2A27;text-wrap:pretty">{{ bio }}</p>
+            <div style="display:flex;gap:6px;margin-top:auto">
+              <span style="height:28px;padding:0 10px;border-radius:999px;background:#F4F1EC;font-size:12px;font-weight:600;color:#6E685F;display:flex;align-items:center;gap:6px"><i class="ph ph-text-align-left"></i>{{ bioWords }} words</span>
+              <span style="height:28px;padding:0 10px;border-radius:999px;background:#F4F1EC;font-size:12px;font-weight:600;color:#6E685F;display:flex;align-items:center;gap:6px;cursor:pointer"><i class="ph ph-copy"></i>Copy</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noBio }}">
+            <div style="flex:1;border:1.5px dashed #D3CCC1;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px;justify-content:center">
+              <div style="font-size:14px;font-weight:600">No bio yet</div>
+              <div style="font-size:13px;color:#8A847A;line-height:1.5">Laura hasn't added one. Send a reminder or write one yourself.</div>
+              <div style="display:flex;gap:8px"><button onClick="{{ remind }}" style="height:34px;padding:0 14px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">{{ remindShort }}</button><button style="height:34px;padding:0 14px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">Write bio</button></div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="grid-column:span 4;background:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:15px;font-weight:700">Photos</div><span style="font-size:13px;color:#8A847A">{{ photoCount }}</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <sc-for list="{{ photos }}" as="p" hint-placeholder-count="3">
+              <div style="aspect-ratio:1;border-radius:14px;background:repeating-linear-gradient(135deg,#ECE8E1 0 8px,#E4DFD7 8px 16px);display:flex;align-items:flex-end;padding:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#8A847A">{{ p.label }}</span></div>
+            </sc-for>
+            <div style="aspect-ratio:1;border-radius:14px;border:1.5px dashed #D3CCC1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#8A847A;font-size:12px;font-weight:600;cursor:pointer"><i class="ph ph-plus" style="font-size:18px"></i>Attach</div>
+          </div>
+        </div>
+
+        <div style="grid-column:span 3;background:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:15px;font-weight:700;padding-bottom:8px">Contact</div>
+          <sc-for list="{{ contacts }}" as="c" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:12px;padding:6px 0">
+              <div style="width:36px;height:36px;border-radius:11px;background:#F4F1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="{{ c.icon }}" style="font-size:16px"></i></div>
+              <div style="font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ c.label }}</div>
+            </div>
+          </sc-for>
+          <div style="height:1px;background:#F1EDE7;margin:10px 0"></div>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ socials }}" as="s" hint-placeholder-count="3">
+              <div title="{{ s.handle }}" style="width:40px;height:40px;border-radius:999px;background:#1B1A18;color:#FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="{{ s.icon }}" style="font-size:18px"></i></div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="grid-column:span 5;background:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:15px;font-weight:700">Videos</div>
+          <sc-if value="{{ hasVideos }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ videos }}" as="v" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:120px;aspect-ratio:16/9;border-radius:12px;background:repeating-linear-gradient(135deg,#232220 0 8px,#2A2926 8px 16px);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="width:30px;height:30px;border-radius:999px;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center"><i class="ph-fill ph-play" style="font-size:13px"></i></span></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                  <div style="font-size:14px;font-weight:600">{{ v.title }}</div>
+                  <div style="font-size:12px;color:#8A847A">{{ v.meta }}</div>
+                </div>
+                <i class="ph ph-arrow-up-right" style="font-size:16px;color:#A39D93"></i>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ noVideos }}">
+            <div style="flex:1;border:1.5px dashed #D3CCC1;border-radius:18px;padding:20px;display:flex;align-items:center;gap:14px">
+              <i class="ph ph-video-camera" style="font-size:22px;color:#A39D93"></i>
+              <div style="flex:1;font-size:13px;color:#8A847A;line-height:1.5">No videos yet. A live clip helps with listings and socials.</div>
+              <button style="height:34px;padding:0 14px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">Add link</button>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="grid-column:span 4;background:#1B1A18;color:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-size:15px;font-weight:700;line-height:1.3">Gigs at<br>Hot Numbers</div>
+            <div style="font-size:40px;font-weight:700;letter-spacing:-0.04em;line-height:1">{{ gigCount }}</div>
+          </div>
+          <sc-for list="{{ gigs }}" as="g" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,0.06)">
+              <span style="width:8px;height:8px;border-radius:999px;background:#D7322B"></span>
+              <span style="flex:1;font-size:14px;font-weight:600">{{ g.name }}</span>
+              <span style="font-size:12px;color:#A39D93">{{ g.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="grid-column:span 3;background:#F6EFD9;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:15px;font-weight:700">Team notes</div><i class="ph ph-lock-simple" style="font-size:15px;color:#8A7A4E"></i></div>
+          <div style="font-size:14px;line-height:1.55;color:#3B3625">{{ latestNote.text }}</div>
+          <div style="font-size:12px;color:#8A7A4E">{{ latestNote.date }}</div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:8px;height:40px;padding:0 6px 0 14px;border-radius:999px;background:rgba(255,255,255,0.6)">
+            <span style="flex:1;font-size:13px;color:#8A7A4E">Add a note…</span>
+            <span style="width:28px;height:28px;border-radius:999px;background:#1B1A18;color:#FFFFFF;display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-arrow-up" style="font-size:12px"></i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1b -->
+  <div id="1b" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="height:30px;padding:0 12px;border-radius:999px;background:#1B1A18;color:#FFFFFF;font-weight:800;font-size:14px;display:flex;align-items:center">1b</span>
+      <span style="font-size:16px;font-weight:600">Workspace: profile card and tabs</span>
+    </div>
+    <div style="width:1280px;min-height:900px;background:#E9E5DE;border-radius:28px;padding:36px;display:flex;gap:20px;align-items:flex-start">
+      <aside style="width:340px;flex-shrink:0;background:#FFFFFF;border-radius:28px;padding:12px;display:flex;flex-direction:column;gap:18px">
+        <div style="position:relative;aspect-ratio:4/5;border-radius:20px;background:repeating-linear-gradient(135deg,#ECE8E1 0 12px,#E4DFD7 12px 24px);display:flex;align-items:center;justify-content:center">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#8A847A">portrait press photo</span>
+          <span style="position:absolute;top:12px;right:12px;height:28px;padding:0 10px;border-radius:999px;background:#FFFFFF;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:{{ statusDot }}"></span>{{ statusLabel }}</span>
+        </div>
+        <div style="padding:0 12px;display:flex;flex-direction:column;gap:6px">
+          <h1 style="margin:0;font-size:30px;font-weight:700;letter-spacing:-0.03em">Laura Birch</h1>
+          <div style="font-size:14px;color:#7A756D">Folk singer-songwriter · Cambridge</div>
+        </div>
+        <div style="padding:0 12px;display:flex;gap:8px">
+          <button onClick="{{ copyLink }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-link-simple" style="font-size:15px"></i>{{ linkLabel }}</button>
+          <button style="width:42px;height:42px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="ph ph-pencil-simple" style="font-size:16px"></i></button>
+        </div>
+        <div style="margin:0 12px;height:1px;background:#F1EDE7"></div>
+        <div style="padding:0 12px 12px;display:flex;flex-direction:column;gap:4px">
+          <sc-for list="{{ contacts }}" as="c" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:12px;padding:6px 0"><i class="{{ c.icon }}" style="font-size:17px;color:#7A756D"></i><span style="font-size:14px;font-weight:600">{{ c.label }}</span></div>
+          </sc-for>
+          <sc-for list="{{ socials }}" as="s" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:6px 0"><i class="{{ s.icon }}" style="font-size:17px;color:#7A756D"></i><span style="font-size:14px;font-weight:600;flex:1">{{ s.handle }}</span><i class="ph ph-arrow-up-right" style="font-size:14px;color:#B5AEA3"></i></div>
+          </sc-for>
+        </div>
+      </aside>
+
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:4px;padding:4px;background:#FFFFFF;border-radius:999px">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+              <sc-if value="{{ t.active }}"><button onClick="{{ t.onClick }}" style="height:38px;padding:0 18px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">{{ t.label }}</button></sc-if>
+              <sc-if value="{{ t.inactive }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t.onClick }}" style="height:38px;padding:0 18px;border-radius:999px;border:none;background:transparent;color:#6E685F;font-size:14px;font-weight:600;cursor:pointer">{{ t.label }}</button></sc-if>
+            </sc-for>
+          </div>
+          <div style="font-size:13px;color:#7A756D">Last updated 14 Oct 2024</div>
+        </div>
+
+        <sc-if value="{{ tabOverview }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ hasGaps }}">
+            <div style="background:#FFFFFF;border-radius:24px;padding:18px 18px 18px 22px;display:flex;align-items:center;gap:16px;border:1.5px solid #F2C4C0">
+              <div style="width:40px;height:40px;border-radius:999px;background:#FBE1DE;color:#B8271F;display:flex;align-items:center;justify-content:center"><i class="ph ph-warning-circle" style="font-size:20px"></i></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+                <div style="font-size:15px;font-weight:700">Still missing: {{ missingList }}</div>
+                <div style="font-size:13px;color:#8A847A">Laura's link was opened on 14 Oct.</div>
+              </div>
+              <button onClick="{{ remind }}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:#D7322B;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">{{ remindLabel }}</button>
+            </div>
+          </sc-if>
+          <div style="background:#FFFFFF;border-radius:24px;padding:8px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+            <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="5">
+              <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}">
+                <div style="border-radius:18px;background:#F1F5EE;padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <i class="ph-fill ph-check-circle" style="font-size:20px;color:#2E5E35"></i>
+                  <div style="font-size:14px;font-weight:700">{{ c.label }}</div>
+                  <div style="font-size:12px;color:#5C7560">{{ c.meta }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.missing }}">
+                <div style="border-radius:18px;border:1.5px dashed #D3CCC1;padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <i class="ph ph-circle-dashed" style="font-size:20px;color:#A39D93"></i>
+                  <div style="font-size:14px;font-weight:700;color:#6E685F">{{ c.label }}</div>
+                  <div style="font-size:12px;color:#A39D93">{{ c.meta }}</div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start">
+            <div style="background:#FFFFFF;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Bio</div>
+              <sc-if value="{{ hasBio }}" hint-placeholder-val="{{ true }}"><p style="margin:0;font-size:17px;line-height:1.65;color:#2B2A27;text-wrap:pretty">{{ bio }}</p></sc-if>
+              <sc-if value="{{ noBio }}"><p style="margin:0;font-size:15px;color:#8A847A">Not received yet.</p></sc-if>
+            </div>
+            <div style="background:#FFFFFF;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93;padding-bottom:10px">History at Hot Numbers</div>
+              <sc-for list="{{ gigs }}" as="g" hint-placeholder-count="3">
+                <div style="display:flex;gap:14px">
+                  <div style="display:flex;flex-direction:column;align-items:center"><span style="width:10px;height:10px;border-radius:999px;background:#D7322B;margin-top:5px"></span><span style="flex:1;width:1.5px;background:#EAE5DD"></span></div>
+                  <div style="padding-bottom:16px;display:flex;flex-direction:column;gap:2px"><div style="font-size:14px;font-weight:700">{{ g.name }}</div><div style="font-size:12px;color:#8A847A">{{ g.date }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabMedia }}">
+          <div style="background:#FFFFFF;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ mediaFilters }}" as="f" hint-placeholder-count="3">
+                  <sc-if value="{{ f.active }}"><button onClick="{{ f.onClick }}" style="height:34px;padding:0 14px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">{{ f.label }}</button></sc-if>
+                  <sc-if value="{{ f.inactive }}" hint-placeholder-val="{{ true }}"><button onClick="{{ f.onClick }}" style="height:34px;padding:0 14px;border-radius:999px;border:none;background:#F4F1EC;color:#6E685F;font-size:13px;font-weight:600;cursor:pointer">{{ f.label }}</button></sc-if>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-download-simple"></i>Download all</button>
+                <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-paper-plane-tilt"></i>Share media</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+              <sc-for list="{{ media }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-if value="{{ m.isVideo }}">
+                    <div style="aspect-ratio:4/3;border-radius:16px;background:repeating-linear-gradient(135deg,#232220 0 10px,#2A2926 10px 20px);display:flex;align-items:center;justify-content:center;position:relative"><span style="width:44px;height:44px;border-radius:999px;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center"><i class="ph-fill ph-play" style="font-size:16px"></i></span><span style="position:absolute;bottom:10px;right:10px;font-size:11px;font-weight:700;color:#FFFFFF;background:rgba(0,0,0,0.5);border-radius:6px;padding:2px 6px">{{ m.dur }}</span></div>
+                  </sc-if>
+                  <sc-if value="{{ m.isPhoto }}" hint-placeholder-val="{{ true }}">
+                    <div style="aspect-ratio:4/3;border-radius:16px;background:repeating-linear-gradient(135deg,#ECE8E1 0 10px,#E4DFD7 10px 20px);display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8A847A">{{ m.label }}</span></div>
+                  </sc-if>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font-size:13px;font-weight:600">{{ m.title }}</span><span style="font-size:12px;color:#8A847A">{{ m.meta }}</span></div>
+                </div>
+              </sc-for>
+              <div style="aspect-ratio:4/3;border-radius:16px;border:1.5px dashed #D3CCC1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#8A847A;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-paperclip" style="font-size:20px"></i>Attach media</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tabNotes }}">
+          <div style="background:#FFFFFF;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <textarea value="{{ draft }}" onChange="{{ onDraft }}" placeholder="Add a note for the team: set length, tech needs, rebooking..." style="flex:1;min-height:80px;resize:vertical;border:1px solid transparent;border-radius:16px;background:#F4F1EC;padding:14px 16px;font-size:14px;line-height:1.5;outline:none" style-focus="background:#FFFFFF;border-color:#1B1A18"></textarea>
+              <button onClick="{{ addNote }}" style="height:44px;padding:0 18px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Add note</button>
+            </div>
+            <sc-for list="{{ notes }}" as="n" hint-placeholder-count="2">
+              <div style="display:flex;gap:14px;padding:14px;border-radius:18px;background:#F6EFD9">
+                <div style="width:34px;height:34px;border-radius:999px;background:#1B1A18;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">{{ n.by }}</div>
+                <div style="display:flex;flex-direction:column;gap:4px"><div style="font-size:14px;line-height:1.55;color:#3B3625">{{ n.text }}</div><div style="font-size:12px;color:#8A7A4E">{{ n.date }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1c -->
+  <div id="1c" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="height:30px;padding:0 12px;border-radius:999px;background:#D7322B;color:#FFFFFF;font-weight:800;font-size:14px;display:flex;align-items:center">1c</span>
+      <span style="font-size:16px;font-weight:600">Press kit: shareable, external</span>
+    </div>
+    <div style="width:1280px;background:#F4F1EC;border-radius:28px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="background:#1B1A18;color:#FFFFFF;padding:12px 16px 12px 24px;display:flex;align-items:center;gap:14px">
+        <i class="ph ph-eye" style="font-size:16px;color:#A39D93"></i>
+        <span style="flex:1;font-size:13px;color:#C9C3B9">{{ previewNote }}</span>
+        <button onClick="{{ copyLink }}" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-link-simple"></i>{{ shareLabel }}</button>
+      </div>
+      <div style="padding:28px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/hn-logo.png" alt="Hot Numbers" style="width:32px;height:32px;border-radius:9px;background:#FFFFFF;object-fit:contain">
+          <span style="font-size:13px;font-weight:700">Hot Numbers</span><span style="font-size:13px;color:#8A847A">· Artist press kit</span>
+        </div>
+        <div style="position:relative;height:520px;border-radius:32px;overflow:hidden;background:repeating-linear-gradient(135deg,#232220 0 16px,#2A2926 16px 32px)">
+          <span style="position:absolute;top:24px;right:28px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#8A847A">hero press photo</span>
+          <div style="position:absolute;left:40px;bottom:36px;right:40px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:14px;font-weight:600;color:#C9C3B9;letter-spacing:0.02em">Folk singer-songwriter · Cambridge</div>
+              <div style="font-size:112px;font-weight:800;letter-spacing:-0.055em;line-height:0.9;color:#FFFFFF">Laura Birch</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ socials }}" as="s" hint-placeholder-count="3">
+                <div style="width:48px;height:48px;border-radius:999px;background:rgba(255,255,255,0.14);color:#FFFFFF;display:flex;align-items:center;justify-content:center"><i class="{{ s.icon }}" style="font-size:20px"></i></div>
+              </sc-for>
+              <button onClick="{{ downloadKit }}" title="{{ downloadTitle }}" style="display:flex;align-items:center;gap:8px;height:48px;padding:0 20px 0 16px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap"><i class="ph-bold ph-download-simple" style="font-size:18px"></i>{{ downloadLabel }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <sc-if value="{{ hasBio }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#FFFFFF;border-radius:28px;padding:36px;display:flex;flex-direction:column;gap:14px">
+                <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">About</div>
+                <p style="margin:0;font-size:24px;line-height:1.45;letter-spacing:-0.01em;color:#1B1A18;text-wrap:pretty">{{ bio }}</p>
+              </div>
+            </sc-if>
+            <div style="display:grid;grid-template-columns:2fr 1fr;grid-template-rows:180px 180px;gap:12px">
+              <div style="grid-row:span 2;border-radius:24px;background:repeating-linear-gradient(135deg,#E4DFD7 0 12px,#DDD7CE 12px 24px);display:flex;align-items:flex-end;padding:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A756D">live at hot numbers</span></div>
+              <div style="border-radius:24px;background:repeating-linear-gradient(135deg,#E4DFD7 0 12px,#DDD7CE 12px 24px);display:flex;align-items:flex-end;padding:14px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A756D">portrait</span></div>
+              <div style="border-radius:24px;background:#1B1A18;color:#FFFFFF;display:flex;flex-direction:column;justify-content:space-between;padding:18px;cursor:pointer"><i class="ph ph-download-simple" style="font-size:22px"></i><div style="font-size:15px;font-weight:700;line-height:1.3">Download<br>hi-res photos</div></div>
+            </div>
+            <sc-if value="{{ hasVideos }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#FFFFFF;border-radius:28px;padding:12px;display:flex;flex-direction:column;gap:12px">
+                <div style="aspect-ratio:16/9;border-radius:20px;background:repeating-linear-gradient(135deg,#232220 0 14px,#2A2926 14px 28px);display:flex;align-items:center;justify-content:center"><span style="width:72px;height:72px;border-radius:999px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><i class="ph-fill ph-play" style="font-size:26px"></i></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 12px 8px"><span style="font-size:16px;font-weight:700">Live session</span><span style="font-size:13px;color:#8A847A">YouTube · 4:12</span></div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div style="background:#FFFFFF;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93;padding-bottom:12px">Listen &amp; follow</div>
+              <sc-for list="{{ socials }}" as="s" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #F1EDE7">
+                  <i class="{{ s.icon }}" style="font-size:22px"></i>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:700">{{ s.name }}</span><span style="font-size:13px;color:#8A847A">{{ s.handle }}</span></div>
+                  <i class="ph ph-arrow-up-right" style="font-size:16px;color:#A39D93"></i>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#1B1A18;color:#FFFFFF;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Played at Hot Numbers</div>
+              <sc-for list="{{ gigs }}" as="g" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><span style="font-size:17px;font-weight:700">{{ g.name }}</span><span style="font-size:13px;color:#A39D93">{{ g.date }}</span></div>
+              </sc-for>
+            </div>
+            <div style="background:#D7322B;color:#FFFFFF;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FFFFFF">Booking &amp; press</div>
+              <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em">laura@laurabirch.co.uk</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;profileState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;complete&quot;,&quot;partial&quot;],&quot;default&quot;:&quot;complete&quot;,&quot;tsType&quot;:&quot;'complete'|'partial'&quot;}}">
+const BIO = 'Laura Birch is a Cambridge-based folk singer-songwriter whose writing sits between intimate fingerpicked guitar and full-band live sets. She has played Discovery Sessions and Sunday Sessions at Hot Numbers.';
+const GIGS = [{date:'12 Oct 2024',name:'Discovery Sessions'},{date:'3 Mar 2024',name:'Sunday Sessions'},{date:'8 Nov 2023',name:'Discovery Sessions'}];
+const SOCIALS = [{icon:'ph ph-instagram-logo',name:'Instagram',handle:'@laurabirchmusic'},{icon:'ph ph-spotify-logo',name:'Spotify',handle:'Laura Birch'},{icon:'ph ph-youtube-logo',name:'YouTube',handle:'Laura Birch Music'}];
+const CONTACTS = [{icon:'ph ph-envelope-simple',label:'laura@laurabirch.co.uk'},{icon:'ph ph-phone',label:'+44 7700 900142'}];
+const PHOTOS = [{label:'press photo',title:'Press photo',meta:'14 Oct'},{label:'live shot',title:'Live at Hot Numbers',meta:'12 Oct'},{label:'portrait',title:'Portrait',meta:'14 Oct'}];
+const VIDEOS = [{title:'Live session',meta:'YouTube · 4:12',dur:'4:12'},{title:'Discovery Sessions set',meta:'Uploaded · 2:48',dur:'2:48'}];
+
+class Component extends DCLogic {
+  state = { tab:'overview', mf:'all', reminded:false, copied:false, draft:'',
+    notes:[{by:'HN',date:'12 Oct 2024',text:'Great turnout for Discovery Sessions. Worth offering a headline Sunday slot.'},{by:'HN',date:'3 Mar 2024',text:'Plays solo: one vocal mic and a DI for guitar.'}] };
+  flash(key){ this.setState({[key]:true}); setTimeout(()=>this.setState({[key]:false}),1800); }
+  renderVals(){
+    const s = this.state, partial = (this.props.profileState ?? 'complete') === 'partial';
+    const hasBio = !partial, hasVideos = !partial;
+    const checklist = [
+      {label:'Bio', ok:hasBio, meta: hasBio ? `${BIO.split(' ').length} words` : 'Not received'},
+      {label:'Photos', ok:true, meta:`${PHOTOS.length} uploaded`},
+      {label:'Videos', ok:hasVideos, meta: hasVideos ? `${VIDEOS.length} added` : 'Not received'},
+      {label:'Socials', ok:true, meta:'3 linked'},
+      {label:'Contact', ok:true, meta:'Email & phone'}].map(c=>({...c,done:c.ok,missing:!c.ok}));
+    const done = checklist.filter(c=>c.ok).length, missing = checklist.filter(c=>!c.ok).map(c=>c.label.toLowerCase());
+    const videos = hasVideos ? VIDEOS : [];
+    const media = [...PHOTOS.map(p=>({...p,isPhoto:true,type:'photo'})), ...videos.map(v=>({...v,label:'video',isVideo:true,type:'video'}))]
+      .filter(m=>s.mf==='all'||m.type===s.mf);
+    return {
+      bio:BIO, hasBio, noBio:!hasBio, bioWords:BIO.split(' ').length,
+      videos, hasVideos, noVideos:!hasVideos,
+      photos:PHOTOS, photoCount:`${PHOTOS.length} photos`,
+      gigs:GIGS, gigCount:GIGS.length, socials:SOCIALS, contacts:CONTACTS,
+      checklist, doneCount:done, totalCount:checklist.length, pct:Math.round(done/checklist.length*100),
+      hasGaps:missing.length>0, noGaps:!missing.length, missingList:missing.join(' and '),
+      statusLabel: missing.length ? `${done} of 5 assets` : 'All assets in', statusDot: missing.length ? '#E0A030' : '#2E5E35',
+      remind:()=>this.flash('reminded'), remindLabel: s.reminded ? 'Reminder sent' : 'Send reminder', remindShort: s.reminded ? 'Sent' : 'Send reminder',
+      downloadKit:()=>this.flash('downloading'), downloadLabel: s.downloading ? 'Preparing zip…' : 'Download all',
+      downloadTitle: 'Photos + videos (.zip) and bio (.md)',
+      copyLink:()=>this.flash('copied'), linkLabel: s.copied ? 'Copied' : 'Get Link', shareLabel: s.copied ? 'Link copied' : 'Copy share link',
+      previewNote: missing.length ? `Public preview. ${missing.length} section${missing.length>1?'s':''} (${missing.join(', ')}) stay hidden until received.` : 'Public preview. This is what promoters and press see.',
+      latestNote: s.notes[0] || {text:'',date:''}, notes:s.notes,
+      tabs:[['overview','Overview'],['media','Media'],['notes','Notes']].map(([k,label])=>({label,active:s.tab===k,inactive:s.tab!==k,onClick:()=>this.setState({tab:k})})),
+      tabOverview:s.tab==='overview', tabMedia:s.tab==='media', tabNotes:s.tab==='notes',
+      mediaFilters:[['all','All'],['photo','Photos'],['video','Videos']].map(([k,label])=>({label,active:s.mf===k,inactive:s.mf!==k,onClick:()=>this.setState({mf:k})})),
+      media, draft:s.draft, onDraft:e=>this.setState({draft:e.target.value}),
+      addNote:()=>{ if(!s.draft.trim()) return; this.setState(st=>({draft:'',notes:[{by:'HN',date:'Today',text:st.draft.trim()},...st.notes]})); }
+    };
+  }
+}
+</script>
+</body>
+</html>

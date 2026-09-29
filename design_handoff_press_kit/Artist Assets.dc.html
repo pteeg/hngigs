@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<style>
+body{margin:0;background:#E9E5DE;font-family:'Manrope',system-ui,sans-serif;color:#1B1A18;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1B1A18;text-decoration:none}a:hover{color:#D7322B}
+input,textarea,button{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#A39D93}
+</style>
+</helmet>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:16px;padding:16px;min-height:100vh;align-items:flex-start">
+
+  <aside style="width:248px;flex-shrink:0;position:sticky;top:16px;height:calc(100vh - 32px);background:#FFFFFF;border-radius:24px;padding:20px 14px;display:flex;flex-direction:column;gap:22px;box-shadow:0 1px 2px rgba(27,26,24,0.04)">
+    <div style="display:flex;align-items:center;gap:12px;padding:4px 8px">
+      <img src="assets/hn-logo.png" alt="Hot Numbers" style="width:40px;height:40px;border-radius:12px;object-fit:contain">
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+        <div style="font-weight:700;font-size:15px;letter-spacing:-0.01em">Hot Numbers Gigs</div>
+        <div style="font-size:12px;color:#8A847A">powered by <span style="font-weight:800;color:#1B1A18">gigin<span style="color:#D7322B">.</span></span></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 12px;background:#F4F1EC;border-radius:14px;color:#8A847A;font-size:14px">
+      <i class="ph ph-magnifying-glass" style="font-size:17px"></i>
+      <span style="flex:1">Search</span>
+      <span style="font-size:11px;font-weight:600;background:#FFFFFF;border-radius:6px;padding:2px 6px;color:#7A756D">⌘K</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#A39D93;padding:0 12px 6px">Menu</div>
+      <div onClick="{{ goList }}" style="display:flex;align-items:center;gap:12px;height:44px;padding:0 14px;border-radius:14px;background:#1B1A18;color:#FFFFFF;font-weight:600;font-size:14px;cursor:pointer">
+        <i class="ph ph-users" style="font-size:18px"></i>
+        <span style="flex:1">Artists</span>
+        <span style="font-size:12px;font-weight:700;background:#D7322B;border-radius:999px;padding:2px 8px">{{ total }}</span>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:12px;height:44px;padding:0 14px;border-radius:14px;color:#6E685F;font-weight:500;font-size:14px;cursor:pointer" style-hover="background:#F4F1EC">
+      <i class="ph ph-gear-six" style="font-size:18px"></i>
+      <span>Settings</span>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;padding:20px 24px 96px;display:flex;justify-content:center">
+    <div style="width:100%;max-width:1120px;display:flex;flex-direction:column;gap:28px">
+
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+      <header style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <h1 style="margin:0;font-size:40px;font-weight:700;letter-spacing:-0.035em;line-height:1.05">Artist Assets</h1>
+          <div style="font-size:15px;color:#7A756D">{{ total }} artists · {{ completeCount }} with everything in</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button onClick="{{ genLink }}" style="display:flex;align-items:center;gap:8px;height:46px;padding:0 20px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(27,26,24,0.06)" style-hover="background:#F7F5F1">
+            <i class="ph ph-link-simple" style="font-size:17px"></i>
+            <sc-if value="{{ genCopied }}"><span>Link copied</span></sc-if>
+            <sc-if value="{{ genIdle }}" hint-placeholder-val="{{ true }}"><span>Generate Asset Link</span></sc-if>
+          </button>
+          <button style="display:flex;align-items:center;gap:10px;height:46px;padding:0 20px 0 8px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#2E2C29">
+            <span style="width:30px;height:30px;border-radius:999px;background:#D7322B;display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-plus" style="font-size:14px"></i></span>
+            Add artist
+          </button>
+        </div>
+      </header>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:4px;padding:4px;background:#FFFFFF;border-radius:999px;flex-wrap:wrap">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+            <sc-if value="{{ t.active }}">
+              <button onClick="{{ t.onClick }}" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">{{ t.label }}<span style="font-size:11px;background:rgba(255,255,255,0.16);border-radius:999px;padding:1px 7px">{{ t.count }}</span></button>
+            </sc-if>
+            <sc-if value="{{ t.inactive }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ t.onClick }}" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:none;background:transparent;color:#6E685F;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F4F1EC">{{ t.label }}<span style="font-size:11px;background:#F0ECE6;border-radius:999px;padding:1px 7px;color:#7A756D">{{ t.count }}</span></button>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;height:44px;padding:0 16px;background:#FFFFFF;border-radius:999px;width:280px;max-width:100%">
+          <i class="ph ph-magnifying-glass" style="font-size:17px;color:#8A847A"></i>
+          <input value="{{ q }}" onChange="{{ onQ }}" placeholder="Find an artist" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:14px;color:#1B1A18">
+        </div>
+      </div>
+
+      <section style="background:#FFFFFF;border-radius:28px;padding:10px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(27,26,24,0.04)">
+        <sc-for list="{{ rows }}" as="a" hint-placeholder-count="8">
+          <div onClick="{{ a.onOpen }}" style="display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:18px;cursor:pointer" style-hover="background:#F7F5F1">
+            <div style="width:46px;height:46px;border-radius:999px;background:{{ a.tint }};color:{{ a.tintInk }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;letter-spacing:0.02em;flex-shrink:0">{{ a.initials }}</div>
+            <div style="flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap">
+            <div style="flex:1 1 180px;min-width:0;display:flex;flex-direction:column;gap:2px">
+              <div style="font-weight:600;font-size:15px;letter-spacing:-0.01em">{{ a.name }}</div>
+              <div style="font-size:13px;color:#8A847A">{{ a.sub }}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-if value="{{ a.none }}">
+                <span style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:#F2EEE8;color:#8A847A;font-size:13px;font-weight:600"><i class="ph ph-circle-dashed" style="font-size:14px"></i>Awaiting assets</span>
+              </sc-if>
+              <sc-if value="{{ a.some }}" hint-placeholder-val="{{ true }}">
+                <sc-for list="{{ a.chips }}" as="c" hint-placeholder-count="3">
+                  <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:#E6EFE2;color:#2E5E35;font-size:13px;font-weight:600"><i class="ph-bold ph-check" style="font-size:12px"></i>{{ c.label }}</span>
+                  </sc-if>
+                  <sc-if value="{{ c.missing }}">
+                    <span style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px dashed #D3CCC1;color:#9A948A;font-size:13px;font-weight:600">{{ c.label }}</span>
+                  </sc-if>
+                </sc-for>
+              </sc-if>
+            </div>
+            </div>
+            <button onClick="{{ a.onCopy }}" style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer;width:112px;justify-content:center" style-hover="border-color:#1B1A18">
+              <sc-if value="{{ a.copied }}"><i class="ph-bold ph-check" style="font-size:14px;color:#2E5E35"></i><span>Copied</span></sc-if>
+              <sc-if value="{{ a.notCopied }}" hint-placeholder-val="{{ true }}"><i class="ph ph-link-simple" style="font-size:15px"></i><span>Get Link</span></sc-if>
+            </button>
+            <i class="ph ph-caret-right" style="font-size:16px;color:#B5AEA3"></i>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noRows }}">
+          <div style="padding:48px;text-align:center;color:#8A847A;font-size:14px">No artists match.</div>
+        </sc-if>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isDetail }}">
+      <div style="display:flex">
+        <button onClick="{{ goList }}" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 16px 0 12px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#F7F5F1"><i class="ph ph-arrow-left" style="font-size:15px"></i>All artists</button>
+      </div>
+
+      <header style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="width:76px;height:76px;border-radius:999px;background:{{ sel.tint }};color:{{ sel.tintInk }};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;flex-shrink:0">{{ sel.initials }}</div>
+        <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
+          <h1 style="margin:0;font-size:40px;font-weight:700;letter-spacing:-0.035em;line-height:1.05">{{ sel.name }}</h1>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ sel.chips }}" as="c" hint-placeholder-count="3">
+              <sc-if value="{{ c.done }}" hint-placeholder-val="{{ true }}">
+                <span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;background:#E6EFE2;color:#2E5E35;font-size:12px;font-weight:600"><i class="ph-bold ph-check" style="font-size:11px"></i>{{ c.label }}</span>
+              </sc-if>
+              <sc-if value="{{ c.missing }}">
+                <span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px dashed #D3CCC1;color:#9A948A;font-size:12px;font-weight:600">{{ c.label }}</span>
+              </sc-if>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ sel.onCopy }}" style="display:flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#F7F5F1">
+            <sc-if value="{{ sel.copied }}"><i class="ph-bold ph-check" style="font-size:15px;color:#2E5E35"></i><span>Copied</span></sc-if>
+            <sc-if value="{{ sel.notCopied }}" hint-placeholder-val="{{ true }}"><i class="ph ph-link-simple" style="font-size:16px"></i><span>Get Link</span></sc-if>
+          </button>
+          <button style="display:flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#2E2C29"><i class="ph ph-pencil-simple" style="font-size:16px"></i>Edit</button>
+        </div>
+      </header>
+
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:20px;flex:2 1 520px;min-width:0">
+          <section style="background:#1B1A18;border-radius:28px;padding:10px;display:flex;flex-direction:column;gap:10px">
+            <sc-if value="{{ hasMedia }}" hint-placeholder-val="{{ true }}">
+              <div style="position:relative;aspect-ratio:16/9;border-radius:20px;overflow:hidden;background:repeating-linear-gradient(135deg,#232220 0 14px,#2A2926 14px 28px);display:flex;align-items:center;justify-content:center">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#8A847A;letter-spacing:0.04em">{{ slide.placeholder }}</span>
+                <span style="position:absolute;top:16px;left:16px;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,0.12);color:#FFFFFF;font-size:11px;font-weight:700;letter-spacing:0.1em;display:flex;align-items:center;gap:6px"><i class="{{ slide.icon }}" style="font-size:13px"></i>{{ slide.type }}</span>
+                <button onClick="{{ prevSlide }}" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:999px;border:none;background:rgba(255,255,255,0.12);color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,0.22)"><i class="ph-bold ph-caret-left" style="font-size:16px"></i></button>
+                <button onClick="{{ nextSlide }}" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:999px;border:none;background:rgba(255,255,255,0.12);color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,0.22)"><i class="ph-bold ph-caret-right" style="font-size:16px"></i></button>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 8px 6px 12px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:14px;min-width:0">
+                  <div style="display:flex;gap:5px">
+                    <sc-for list="{{ dots }}" as="d" hint-placeholder-count="2">
+                      <sc-if value="{{ d.active }}" hint-placeholder-val="{{ true }}"><span style="width:18px;height:6px;border-radius:999px;background:#D7322B"></span></sc-if>
+                      <sc-if value="{{ d.inactive }}"><span onClick="{{ d.onClick }}" style="width:6px;height:6px;border-radius:999px;background:#4A4843;cursor:pointer"></span></sc-if>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:13px;color:#C9C3B9">{{ slide.caption }}</span>
+                </div>
+                <div style="display:flex;gap:6px">
+                  <button title="Download" style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:none;background:rgba(255,255,255,0.08);color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,0.16)"><i class="ph ph-download-simple" style="font-size:15px"></i>Download</button>
+                  <button style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:none;background:rgba(255,255,255,0.08);color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,0.16)"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Share media</button>
+                  <button style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-paperclip" style="font-size:15px"></i>Attach media</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noMedia }}">
+              <div style="aspect-ratio:16/7;border-radius:20px;border:1px dashed #3A3834;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#A39D93;font-size:14px">
+                <i class="ph ph-image" style="font-size:28px"></i>
+                <span>No photos or videos yet</span>
+                <button style="display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-paperclip" style="font-size:15px"></i>Attach media</button>
+              </div>
+            </sc-if>
+          </section>
+
+          <section style="background:#FFFFFF;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Bio</div>
+            <sc-if value="{{ sel.bio }}" hint-placeholder-val="{{ true }}">
+              <p style="margin:0;font-size:16px;line-height:1.65;color:#2B2A27;text-wrap:pretty;max-width:68ch">{{ sel.bioText }}</p>
+            </sc-if>
+            <sc-if value="{{ sel.noBio }}">
+              <p style="margin:0;font-size:15px;color:#8A847A">No bio yet. Send {{ sel.first }} their asset link to collect one.</p>
+            </sc-if>
+            <div style="height:1px;background:#EFEBE4;margin:10px 0"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Links</div>
+              <button style="display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:none;background:#F4F1EC;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#ECE8E1"><i class="ph-bold ph-plus" style="font-size:12px"></i>Add link</button>
+            </div>
+            <sc-for list="{{ sel.links }}" as="l" hint-placeholder-count="1">
+              <div style="display:flex;align-items:center;gap:14px;padding:12px;border-radius:16px;background:#F7F5F1">
+                <div style="width:40px;height:40px;border-radius:12px;background:#1B1A18;color:#FFFFFF;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ph ph-play" style="font-size:16px"></i></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-weight:600;font-size:14px">{{ l.title }}</div>
+                  <div style="font-size:12px;color:#8A847A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ l.url }}</div>
+                </div>
+                <i class="ph ph-x" style="font-size:16px;color:#A39D93;cursor:pointer;padding:6px"></i>
+              </div>
+            </sc-for>
+            <sc-if value="{{ sel.noLinks }}"><div style="font-size:14px;color:#8A847A">No links added.</div></sc-if>
+          </section>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:20px;flex:1 1 300px;min-width:0">
+          <section style="background:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93;padding-bottom:8px">Contact</div>
+            <sc-for list="{{ sel.contacts }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:14px;padding:8px;margin:0 -8px;border-radius:14px;cursor:pointer" style-hover="background:#F7F5F1">
+                <div style="width:40px;height:40px;border-radius:12px;background:#F4F1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="{{ c.icon }}" style="font-size:18px"></i></div>
+                <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                  <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis">{{ c.label }}</div>
+                  <sc-if value="{{ c.sub }}"><div style="font-size:13px;color:#8A847A">{{ c.sub }}</div></sc-if>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ sel.noContacts }}"><div style="font-size:14px;color:#8A847A;line-height:1.5">Contact details appear here once {{ sel.first }} fills in their asset link.</div></sc-if>
+          </section>
+
+          <section style="background:#1B1A18;color:#FFFFFF;border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <div style="font-size:15px;font-weight:600;line-height:1.3">Gigs played at<br>Hot Numbers</div>
+              <div style="font-size:40px;font-weight:700;letter-spacing:-0.04em;line-height:1">{{ sel.gigCount }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sel.gigs }}" as="g" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,0.06)">
+                  <span style="width:8px;height:8px;border-radius:999px;background:#D7322B;flex-shrink:0"></span>
+                  <span style="flex:1;font-size:14px;font-weight:600">{{ g.name }}</span>
+                  <span style="font-size:12px;color:#A39D93">{{ g.date }}</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{ sel.noGigs }}"><div style="font-size:14px;color:#A39D93">No gigs logged yet.</div></sc-if>
+            </div>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    </div>
+  </main>
+</div>
+</sc-if>
+
+<sc-if value="{{ isForm }}">
+<div style="min-height:100vh;padding:48px 20px 120px;display:flex;justify-content:center">
+  <div style="width:100%;max-width:640px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 8px">
+      <img src="assets/hn-logo.png" alt="Hot Numbers" style="width:40px;height:40px;border-radius:12px;background:#FFFFFF;object-fit:contain">
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <div style="font-weight:700;font-size:15px">Hot Numbers Gigs</div>
+        <div style="font-size:12px;color:#7A756D">Your Assets</div>
+      </div>
+    </div>
+
+    <sc-if value="{{ sent }}">
+      <section style="background:#FFFFFF;border-radius:32px;padding:48px 40px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <div style="width:52px;height:52px;border-radius:999px;background:#E6EFE2;color:#2E5E35;display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-check" style="font-size:22px"></i></div>
+        <h1 style="margin:0;font-size:34px;font-weight:700;letter-spacing:-0.03em">Thanks, David.</h1>
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#6E685F">Your assets are with the Hot Numbers team. You can reopen this link any time to make changes.</p>
+        <button onClick="{{ unsend }}" style="margin-top:8px;height:44px;padding:0 18px;border-radius:999px;border:none;background:#F4F1EC;color:#1B1A18;font-size:14px;font-weight:600;cursor:pointer">Edit my assets</button>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+    <section style="background:#FFFFFF;border-radius:32px;padding:40px;display:flex;flex-direction:column;gap:32px;box-shadow:0 1px 2px rgba(27,26,24,0.04)">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <h1 style="margin:0;font-size:36px;font-weight:700;letter-spacing:-0.035em;line-height:1.1">Hi David Gordon!</h1>
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#6E685F;text-wrap:pretty">Please add your bio, any good photos and videos and any relevant links to media you wish to share.</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Bio</label>
+        <textarea value="{{ bio }}" onChange="{{ onBio }}" placeholder="A short bio for listings and press..." style="min-height:160px;resize:vertical;border:1px solid transparent;border-radius:18px;background:#F4F1EC;padding:16px 18px;font-size:15px;line-height:1.6;color:#1B1A18;outline:none" style-focus="background:#FFFFFF;border-color:#1B1A18"></textarea>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Socials</label>
+        <div style="display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;border-radius:16px;background:#F4F1EC">
+          <i class="ph ph-instagram-logo" style="font-size:20px;color:#6E685F"></i>
+          <input placeholder="@handle or URL" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:15px;color:#1B1A18">
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;border-radius:16px;background:#F4F1EC">
+          <i class="ph ph-spotify-logo" style="font-size:20px;color:#6E685F"></i>
+          <input placeholder="Artist name or URL" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:15px;color:#1B1A18">
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;border-radius:16px;background:#F4F1EC">
+          <i class="ph ph-youtube-logo" style="font-size:20px;color:#6E685F"></i>
+          <input placeholder="Channel or URL" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:15px;color:#1B1A18">
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#A39D93">Photos &amp; Videos</label>
+        <div onClick="{{ addFile }}" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 20px;border-radius:20px;border:1.5px dashed #D3CCC1;background:#FAF8F5;cursor:pointer;text-align:center" style-hover="border-color:#1B1A18;background:#F7F5F1">
+          <div style="width:44px;height:44px;border-radius:999px;background:#D7322B;color:#FFFFFF;display:flex;align-items:center;justify-content:center"><i class="ph-bold ph-upload-simple" style="font-size:18px"></i></div>
+          <div style="font-size:15px;font-weight:600">Add files</div>
+          <div style="font-size:13px;color:#8A847A">Drop photos or videos here, or click to browse</div>
+        </div>
+        <button style="display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border-radius:999px;border:1px solid #E6E1D9;background:#FFFFFF;color:#1B1A18;font-size:14px;font-weight:600;cursor:pointer" style-hover="border-color:#1B1A18"><i class="ph ph-link-simple" style="font-size:16px"></i>Add link to video</button>
+        <sc-for list="{{ files }}" as="f" hint-placeholder-count="1">
+          <div style="display:flex;align-items:center;gap:14px;padding:10px 12px 10px 10px;border-radius:16px;background:#F7F5F1">
+            <div style="width:48px;height:48px;border-radius:12px;background:repeating-linear-gradient(135deg,#ECE8E1 0 6px,#E4DFD7 6px 12px);flex-shrink:0"></div>
+            <div style="flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.name }}</div>
+            <button style="display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-eye" style="font-size:14px"></i>Preview</button>
+            <button onClick="{{ f.onRemove }}" style="width:32px;height:32px;border-radius:999px;border:none;background:transparent;color:#8A847A;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#ECE8E1"><i class="ph ph-x" style="font-size:15px"></i></button>
+          </div>
+        </sc-for>
+      </div>
+
+      <button onClick="{{ send }}" style="display:flex;align-items:center;justify-content:center;gap:10px;height:56px;border-radius:999px;border:none;background:#1B1A18;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#2E2C29">Send to Hot Numbers<i class="ph-bold ph-arrow-right" style="font-size:16px"></i></button>
+    </section>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showSwitcher }}" hint-placeholder-val="{{ true }}">
+  <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(27,26,24,0.92);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(27,26,24,0.2);z-index:10">
+    <sc-for list="{{ switcher }}" as="w" hint-placeholder-count="3">
+      <sc-if value="{{ w.active }}"><button onClick="{{ w.onClick }}" style="height:34px;padding:0 14px;border-radius:999px;border:none;background:#FFFFFF;color:#1B1A18;font-size:12px;font-weight:700;cursor:pointer">{{ w.label }}</button></sc-if>
+      <sc-if value="{{ w.inactive }}" hint-placeholder-val="{{ true }}"><button onClick="{{ w.onClick }}" style="height:34px;padding:0 14px;border-radius:999px;border:none;background:transparent;color:#C9C3B9;font-size:12px;font-weight:600;cursor:pointer">{{ w.label }}</button></sc-if>
+    </sc-for>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;detail&quot;,&quot;form&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;'list'|'detail'|'form'&quot;},&quot;showSwitcher&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const RAW = [
+  ['Laura Birch',1,1,1],['Joe Magee',1,1,0],['Tom Challenger Trio',1,0,0],['Sarathy Korwar feat. Nour',1,0,0],
+  ['Eliza Parsons',1,1,1],["Tomorrow's New Quartet",0,0,0],['Harry Christelis',0,0,0],['David Gordon',0,1,0],
+  ['Testaments',0,0,0],['John Turville Trio',0,0,0],['The Fontanas',0,0,0]];
+const TINTS = [['#FBE1DE','#B8271F'],['#F3E8D2','#8A5A14'],['#E2EBE4','#2E5E35'],['#E4E4EE','#3E3F6E'],['#EDE3EA','#7A3767']];
+const A = RAW.map(([name,bio,photos,videos],i)=>{
+  const n = bio+photos+videos;
+  const words = name.replace(/[^A-Za-z' ]/g,'').split(' ').filter(Boolean);
+  return { id: name.toLowerCase().replace(/[^a-z]+/g,'-'), name, bio:!!bio, photos:!!photos, videos:!!videos, n,
+    initials: (words[0][0] + (words[1]||words[0])[0]).toUpperCase(),
+    first: words[0], tint: TINTS[i%5][0], tintInk: TINTS[i%5][1],
+    status: n===3?'complete':n===0?'awaiting':'progress',
+    sub: n===3?'All assets in':n===0?'Link not yet filled in':`${n} of 3 assets received` };
+});
+const DETAILS = {
+  'laura-birch': {
+    bioText: 'Laura Birch is a Cambridge-based folk singer-songwriter whose writing sits between intimate fingerpicked guitar and full-band live sets. She has played Discovery Sessions and Sunday Sessions at Hot Numbers.',
+    photoCaption: 'Press photo · uploaded 14 Oct',
+    links: [{ title:'Live session', url:'https://www.youtube.com/watch?v=jfKfPfyJRdk' }],
+    contacts: [
+      { icon:'ph ph-envelope-simple', label:'laura@laurabirch.co.uk' },
+      { icon:'ph ph-phone', label:'+44 7700 900142' },
+      { icon:'ph ph-instagram-logo', label:'Instagram', sub:'@laurabirchmusic' },
+      { icon:'ph ph-spotify-logo', label:'Spotify', sub:'Laura Birch' },
+      { icon:'ph ph-youtube-logo', label:'YouTube', sub:'Laura Birch Music' }],
+    gigs: [{date:'12 Oct 2024',name:'Discovery Sessions'},{date:'3 Mar 2024',name:'Sunday Sessions'},{date:'8 Nov 2023',name:'Discovery Sessions'}]
+  }
+};
+const chips = a => [['Bio',a.bio],['Photos',a.photos],['Videos',a.videos]].map(([label,d])=>({label,done:d,missing:!d}));
+
+class Component extends DCLogic {
+  state = { screen: this.props.startScreen ?? 'list', selId:'laura-birch', filter:'all', q:'', copied:null, slide:0,
+    bio:'', files:[{id:1,name:'gardner-denley-logo.png'}], sent:false };
+  componentDidUpdate(pp){ if (pp.startScreen !== this.props.startScreen && this.props.startScreen) this.setState({screen:this.props.startScreen}); }
+  copy(id){
+    try { navigator.clipboard && navigator.clipboard.writeText(`https://hotnumbers.gigin.app/u/${id}`); } catch(e){}
+    this.setState({copied:id}); clearTimeout(this._t); this._t = setTimeout(()=>this.setState({copied:null}),1600);
+  }
+  renderVals(){
+    const s = this.state;
+    const counts = { all:A.length, complete:0, progress:0, awaiting:0 };
+    A.forEach(a=>counts[a.status]++);
+    const tabs = [['all','All'],['complete','Complete'],['progress','In progress'],['awaiting','Awaiting']]
+      .map(([k,label])=>({label,count:counts[k],active:s.filter===k,inactive:s.filter!==k,onClick:()=>this.setState({filter:k})}));
+    const q = s.q.trim().toLowerCase();
+    const rows = A.filter(a=>(s.filter==='all'||a.status===s.filter)&&(!q||a.name.toLowerCase().includes(q))).map(a=>({
+      ...a, chips:chips(a), none:a.n===0, some:a.n>0, copied:s.copied===a.id, notCopied:s.copied!==a.id,
+      onOpen:()=>this.setState({screen:'detail',selId:a.id,slide:0}),
+      onCopy:e=>{ e.stopPropagation(); this.copy(a.id); } }));
+    const base = A.find(a=>a.id===s.selId) || A[0];
+    const d = DETAILS[base.id] || {};
+    const links = d.links || [], contacts = d.contacts || [], gigs = d.gigs || [];
+    const sel = { ...base, chips:chips(base), bioText: d.bioText || 'Bio received from artist.', noBio:!base.bio,
+      links, noLinks:!links.length, contacts, noContacts:!contacts.length, gigs, noGigs:!gigs.length, gigCount:gigs.length,
+      copied:s.copied===base.id, notCopied:s.copied!==base.id, onCopy:()=>this.copy(base.id) };
+    const slides = [];
+    if (base.photos) slides.push({type:'PHOTO',icon:'ph ph-image',placeholder:'press photo',caption:d.photoCaption||'Press photo'});
+    if (base.videos) slides.push({type:'VIDEO',icon:'ph ph-play',placeholder:'video',caption:'Live session · YouTube'});
+    const idx = slides.length ? s.slide % slides.length : 0;
+    const go = dir=>this.setState(st=>({slide:(st.slide+dir+slides.length)%slides.length}));
+    const scr = s.screen;
+    return {
+      isApp: scr!=='form', isList: scr==='list', isDetail: scr==='detail', isForm: scr==='form',
+      total:A.length, completeCount:counts.complete, tabs, rows, noRows:!rows.length,
+      q:s.q, onQ:e=>this.setState({q:e.target.value}),
+      genCopied:s.copied==='__gen', genIdle:s.copied!=='__gen', genLink:()=>this.copy('__gen'),
+      goList:()=>this.setState({screen:'list'}),
+      sel, hasMedia:slides.length>0, noMedia:!slides.length, slide:slides[idx]||{},
+      dots:slides.map((_,i)=>({active:i===idx,inactive:i!==idx,onClick:()=>this.setState({slide:i})})),
+      prevSlide:()=>go(-1), nextSlide:()=>go(1),
+      bio:s.bio, onBio:e=>this.setState({bio:e.target.value}),
+      files:s.files.map(f=>({...f,onRemove:()=>this.setState(st=>({files:st.files.filter(x=>x.id!==f.id)}))})),
+      addFile:()=>this.setState(st=>({files:[...st.files,{id:Date.now(),name:`press-shot-0${st.files.length+1}.jpg`}]})),
+      sent:s.sent, notSent:!s.sent, send:()=>this.setState({sent:true}), unsend:()=>this.setState({sent:false}),
+      showSwitcher: this.props.showSwitcher ?? true,
+      switcher:[['list','Artists'],['detail','Artist profile'],['form','Artist upload link']].map(([k,label])=>({label,active:scr===k,inactive:scr!==k,onClick:()=>this.setState({screen:k})}))
+    };
+  }
+}
+</script>
+</body>
+</html>

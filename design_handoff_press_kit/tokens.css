@@ -1,0 +1,59 @@
+/* Hot Numbers Gigs design tokens. Replace the :root block at the top of src/index.css with this. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Surfaces */
+  --bg-app: #E9E5DE;        /* staff app page background */
+  --bg-soft: #F4F1EC;       /* inputs, press-kit page, sidebar search, secondary buttons */
+  --bg-hover: #F7F5F1;      /* row / white-button hover */
+  --bg-subtle: #FAF8F5;     /* dropzone */
+  --card: #FFFFFF;
+  --ink: #1B1A18;           /* primary text, dark cards, primary buttons */
+  --ink-hover: #2E2C29;     /* primary button hover */
+
+  /* Text */
+  --text: #1B1A18;
+  --text-2: #6E685F;        /* body secondary, lead paragraphs */
+  --muted: #8A847A;         /* meta, sub-lines */
+  --label: #A39D93;         /* uppercase labels, placeholder, icons on dark */
+  --on-dark-2: #C9C3B9;     /* secondary text on --ink */
+
+  /* Lines */
+  --line: #E6E1D9;          /* outline buttons */
+  --line-soft: #F1EDE7;     /* row dividers */
+  --line-dash: #D3CCC1;     /* dashed "missing" chips, dropzones */
+
+  /* Brand + status */
+  --red: #D7322B;           /* Hot Numbers accent: badges, add-icon, booking card, logo dot */
+  --red-tint: #FBE1DE;  --red-ink: #B8271F;
+  --ok-tint: #E6EFE2;   --ok-ink: #2E5E35;
+  --warn: #E0A030;
+  --chip-idle: #F2EEE8;     /* "Awaiting assets" chip */
+  --count-bg: #F0ECE6;      /* counts inside inactive tabs */
+
+  /* Type */
+  --font: 'Manrope', system-ui, -apple-system, sans-serif;
+  --fs-display: 112px; --fs-h1: 40px; --fs-h1-form: 36px; --fs-lead: 24px;
+  --fs-lg: 17px; --fs-md: 15px; --fs-base: 14px; --fs-sm: 13px; --fs-xs: 12px; --fs-label: 11px;
+
+  /* Radius */
+  --r-pill: 999px; --r-hero: 32px; --r-card: 28px; --r-card-sm: 24px;
+  --r-tile: 20px; --r-row: 18px; --r-input: 16px; --r-nav: 14px; --r-thumb: 12px;
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(27, 26, 24, 0.04);
+  --shadow-btn: 0 1px 2px rgba(27, 26, 24, 0.06);
+
+  --content-max: 1120px;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-app);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--ink); text-decoration: none; }
+a:hover { color: var(--red); }
+input, textarea, button { font-family: inherit; }
+input::placeholder, textarea::placeholder { color: var(--label); }

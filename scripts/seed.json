@@ -1,0 +1,95 @@
+{
+  "scrapedAt": "2026-09-17T15:49:39.802Z",
+  "organiserUrl": "https://www.eventbrite.co.uk/o/hot-numbers-coffee-ltd-74278332993",
+  "totalEventsFound": 36,
+  "gigEventsFound": 9,
+  "artists": [
+    {
+      "name": "Jazz Lates",
+      "initials": "JL",
+      "assetStatus": "none",
+      "gigs": [
+        {
+          "title": "Jazz Lates at Hot Numbers: Tomorrow’s New Quartet",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/jazz-lates-at-hot-numbers-tomorrows-new-quartet-tickets-1984462049410?aff=ebdsoporgprofile"
+        },
+        {
+          "title": "Jazz Lates at Hot Numbers: Harry Christelis",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/jazz-lates-at-hot-numbers-harry-christelis-tickets-1977935671839?aff=ebdsoporgprofile"
+        },
+        {
+          "title": "Jazz Lates at Hot Numbers: David Gordon",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/jazz-lates-at-hot-numbers-david-gordon-tickets-1977929147324?aff=ebdsoporgprofile"
+        },
+        {
+          "title": "Jazz Lates at Hot Numbers: Testaments",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/jazz-lates-at-hot-numbers-testaments-tickets-1977932277687?aff=ebdsoporgprofile"
+        }
+      ]
+    },
+    {
+      "name": "DJ Sessions - DJs Chris Brown & Shaun Owen",
+      "initials": "DS",
+      "assetStatus": "none",
+      "gigs": [
+        {
+          "title": "DJ Sessions - DJs Chris Brown & Shaun Owen",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/dj-sessions-djs-chris-brown-shaun-owen-tickets-1994298359077?aff=ebdsoporgprofile"
+        }
+      ]
+    },
+    {
+      "name": "Friday lates",
+      "initials": "FL",
+      "assetStatus": "none",
+      "gigs": [
+        {
+          "title": "Friday lates at Hot Numbers: Discovery Sessions",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/friday-lates-at-hot-numbers-discovery-sessions-tickets-1984461813705?aff=ebdsoporgprofile"
+        }
+      ]
+    },
+    {
+      "name": "John Turville Trio",
+      "initials": "JT",
+      "assetStatus": "none",
+      "gigs": [
+        {
+          "title": "John Turville Trio",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/john-turville-trio-tickets-1984453687399?aff=ebdsoporgprofile"
+        }
+      ]
+    },
+    {
+      "name": "The Fontanas",
+      "initials": "TF",
+      "assetStatus": "none",
+      "gigs": [
+        {
+          "title": "International Jazz Day : The Fontanas",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/international-jazz-day-the-fontanas-tickets-1983256711211?aff=ebdsoporgprofile"
+        }
+      ]
+    },
+    {
+      "name": "15 Years of Hot Numbers – Freedom Sound! DJs presents a tribute to DJ Skunk",
+      "initials": "1Y",
+      "assetStatus": "none",
+      "gigs": [
+        {
+          "title": "15 Years of Hot Numbers – Freedom Sound! DJs presents a tribute to DJ Skunk",
+          "date": "",
+          "url": "https://www.eventbrite.co.uk/e/15-years-of-hot-numbers-freedom-sound-djs-presents-a-tribute-to-dj-skunk-tickets-1984461012308?aff=ebdsoporgprofile"
+        }
+      ]
+    }
+  ]
+}

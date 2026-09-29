@@ -1,0 +1,368 @@
+rules_version = '2';
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: staff
+// Document ID: Firebase Auth uid
+// Fields:
+//   - email: string (required, 3-120, must equal the auth token email) - staff login
+//   - role: string (required, only "staff", immutable) - shared venue access, not a hierarchy
+//   - createdAt: timestamp (required, immutable)
+// Access: a person can read only their own staff document. All staff share the CRM.
+// Clients cannot create or edit these documents. Add them in the Firebase console.
+//
+// Collection: meta
+// Document ID: bootstrap
+// Fields:
+//   - ownerUid: string (required, the first staff uid)
+//   - createdAt: timestamp (required)
+// Access: any signed-in user may get this single document. No updates or deletes.
+//
+// Collection: settings
+// Document ID: venue
+// Fields:
+//   - invitedEmails: list of email strings (required, max 30, each max 120)
+// Access: staff only. This list is how a colleague can create their own login.
+//
+// Collection: artists
+// Document ID: slug, ^[a-z0-9-]{1,80}$
+// Fields:
+//   - name, initials, tagline, bio: strings
+//   - gigs: int 0-10000
+//   - assets: "received" | "partial" | "sent" | "none"
+//   - contact: map email, phone, instagram, spotify, youtube
+//   - media: list <= 6 of {type, label, url}
+//   - links: list <= 8 of {url, label}
+//   - gigHistory: list <= 8 of {date, name}
+//   - uploadToken: string 8-64
+//   - linkGeneratedAt, submittedAt: timestamp or null
+// Access: staff only. Contact email and phone are private.
+//
+// Collection: publicKits
+// Document ID: same slug as artists
+// Public projection of an artist with no email, phone, or upload token.
+// Access: anyone may get a kit by id. Nobody may list them. Only staff may write.
+//
+// Collection: tokens
+// Document ID: the unguessable upload token
+// Same public fields as a kit, plus artistId.
+// Access: anyone who knows the token may get and update the editable public fields.
+// Only staff may list tokens or create them.
+//
+// Queries the app runs:
+//   - staff: list artists (no where/orderBy) via onSnapshot, because the CRM is a shared live list
+//   - staff: list tokens (no where/orderBy) via onSnapshot, to fold artist-link edits into the CRM
+//   - public: get publicKits/{id} and get tokens/{token} only
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function isStaff() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+        && get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role == 'staff';
+    }
+
+    function isValidEmail(email) {
+      return email is string
+        && email.size() >= 3
+        && email.size() <= 120
+        && email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isValidUrl(url) {
+      return url is string
+        && url.size() > 0
+        && url.size() <= 500
+        && (url.matches('^https://.*') || url.matches('^http://.*'));
+    }
+
+    function isValidMediaUrl(url) {
+      return url is string
+        && url.size() <= 700000
+        && (
+          url.size() == 0
+          || url.matches('^https://.*')
+          || url.matches('^http://.*')
+          || url.matches('^data:image/.*')
+          || url.matches('^data:video/.*')
+        );
+    }
+
+    function isValidMediaItem(item) {
+      return item is map
+        && item.keys().hasOnly(['type', 'label', 'url'])
+        && item.type in ['photo', 'video']
+        && item.label is string
+        && item.label.size() <= 200
+        && isValidMediaUrl(item.url);
+    }
+
+    function isValidLinkItem(item) {
+      return item is map
+        && item.keys().hasOnly(['url', 'label'])
+        && isValidUrl(item.url)
+        && item.label is string
+        && item.label.size() <= 120;
+    }
+
+    function isValidGigItem(item) {
+      return item is map
+        && item.keys().hasOnly(['date', 'name'])
+        && item.date is string
+        && item.date.size() > 0
+        && item.date.size() <= 40
+        && item.name is string
+        && item.name.size() > 0
+        && item.name.size() <= 120;
+    }
+
+    function mediaItemsOk(items) {
+      return items is list
+        && items.size() <= 6
+        && mediaUrlBudgetOk(items)
+        && (items.size() < 1 || isValidMediaItem(items[0]))
+        && (items.size() < 2 || isValidMediaItem(items[1]))
+        && (items.size() < 3 || isValidMediaItem(items[2]))
+        && (items.size() < 4 || isValidMediaItem(items[3]))
+        && (items.size() < 5 || isValidMediaItem(items[4]))
+        && (items.size() < 6 || isValidMediaItem(items[5]));
+    }
+
+    function mediaUrlBudgetOk(items) {
+      return (items.size() < 1 ? 0 : items[0].url.size())
+        + (items.size() < 2 ? 0 : items[1].url.size())
+        + (items.size() < 3 ? 0 : items[2].url.size())
+        + (items.size() < 4 ? 0 : items[3].url.size())
+        + (items.size() < 5 ? 0 : items[4].url.size())
+        + (items.size() < 6 ? 0 : items[5].url.size())
+        <= 700000;
+    }
+
+    function linkItemsOk(items) {
+      return items is list
+        && items.size() <= 8
+        && (items.size() < 1 || isValidLinkItem(items[0]))
+        && (items.size() < 2 || isValidLinkItem(items[1]))
+        && (items.size() < 3 || isValidLinkItem(items[2]))
+        && (items.size() < 4 || isValidLinkItem(items[3]))
+        && (items.size() < 5 || isValidLinkItem(items[4]))
+        && (items.size() < 6 || isValidLinkItem(items[5]))
+        && (items.size() < 7 || isValidLinkItem(items[6]))
+        && (items.size() < 8 || isValidLinkItem(items[7]));
+    }
+
+    function gigItemsOk(items) {
+      return items is list
+        && items.size() <= 8
+        && (items.size() < 1 || isValidGigItem(items[0]))
+        && (items.size() < 2 || isValidGigItem(items[1]))
+        && (items.size() < 3 || isValidGigItem(items[2]))
+        && (items.size() < 4 || isValidGigItem(items[3]))
+        && (items.size() < 5 || isValidGigItem(items[4]))
+        && (items.size() < 6 || isValidGigItem(items[5]))
+        && (items.size() < 7 || isValidGigItem(items[6]))
+        && (items.size() < 8 || isValidGigItem(items[7]));
+    }
+
+    function isOptionalTimestamp(value) {
+      return value == null || value is timestamp;
+    }
+
+    function isValidPublicContact(contact) {
+      return contact is map
+        && contact.keys().hasOnly(['instagram', 'spotify', 'youtube'])
+        && contact.instagram is string && contact.instagram.size() <= 200
+        && contact.spotify is string && contact.spotify.size() <= 300
+        && contact.youtube is string && contact.youtube.size() <= 300;
+    }
+
+    function isValidPrivateContact(contact) {
+      return contact is map
+        && contact.keys().hasOnly(['email', 'phone', 'instagram', 'spotify', 'youtube'])
+        && contact.email is string && contact.email.size() <= 120
+        && (contact.email.size() == 0 || isValidEmail(contact.email))
+        && contact.phone is string && contact.phone.size() <= 40
+        && contact.instagram is string && contact.instagram.size() <= 200
+        && contact.spotify is string && contact.spotify.size() <= 300
+        && contact.youtube is string && contact.youtube.size() <= 300;
+    }
+
+    function hasPublicShape(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && data.initials is string && data.initials.size() >= 1 && data.initials.size() <= 4
+        && data.tagline is string && data.tagline.size() <= 200
+        && data.bio is string && data.bio.size() <= 8000
+        && data.gigs is int && data.gigs >= 0 && data.gigs <= 10000
+        && data.assets in ['received', 'partial', 'sent', 'none']
+        && isValidPublicContact(data.contact)
+        && mediaItemsOk(data.media)
+        && linkItemsOk(data.links)
+        && gigItemsOk(data.gigHistory)
+        && isOptionalTimestamp(data.linkGeneratedAt)
+        && isOptionalTimestamp(data.submittedAt);
+    }
+
+    function isValidPublicKit(data) {
+      return data.keys().hasOnly([
+          'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
+          'media', 'links', 'gigHistory', 'linkGeneratedAt', 'submittedAt'
+        ])
+        && hasPublicShape(data);
+    }
+
+    function isValidToken(data) {
+      return data.keys().hasOnly([
+          'artistId', 'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
+          'media', 'links', 'gigHistory', 'linkGeneratedAt', 'submittedAt'
+        ])
+        && data.artistId is string
+        && data.artistId.matches('^[a-z0-9-]{1,80}$')
+        && hasPublicShape(data);
+    }
+
+    function isValidArtist(data) {
+      return data.keys().hasOnly([
+          'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
+          'media', 'links', 'gigHistory', 'uploadToken', 'linkGeneratedAt', 'submittedAt'
+        ])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 120
+        && data.initials is string && data.initials.size() >= 1 && data.initials.size() <= 4
+        && data.tagline is string && data.tagline.size() <= 200
+        && data.bio is string && data.bio.size() <= 8000
+        && data.gigs is int && data.gigs >= 0 && data.gigs <= 10000
+        && data.assets in ['received', 'partial', 'sent', 'none']
+        && isValidPrivateContact(data.contact)
+        && mediaItemsOk(data.media)
+        && linkItemsOk(data.links)
+        && gigItemsOk(data.gigHistory)
+        && data.uploadToken is string
+        && data.uploadToken.matches('^[A-Za-z0-9]{8,64}$')
+        && isOptionalTimestamp(data.linkGeneratedAt)
+        && isOptionalTimestamp(data.submittedAt);
+    }
+
+    function isValidVenue(data) {
+      return data.keys().hasOnly(['invitedEmails'])
+        && data.invitedEmails is list
+        && data.invitedEmails.size() <= 30
+        && (data.invitedEmails.size() < 1 || isValidEmail(data.invitedEmails[0]))
+        && (data.invitedEmails.size() < 2 || isValidEmail(data.invitedEmails[1]))
+        && (data.invitedEmails.size() < 3 || isValidEmail(data.invitedEmails[2]))
+        && (data.invitedEmails.size() < 4 || isValidEmail(data.invitedEmails[3]))
+        && (data.invitedEmails.size() < 5 || isValidEmail(data.invitedEmails[4]))
+        && (data.invitedEmails.size() < 6 || isValidEmail(data.invitedEmails[5]))
+        && (data.invitedEmails.size() < 7 || isValidEmail(data.invitedEmails[6]))
+        && (data.invitedEmails.size() < 8 || isValidEmail(data.invitedEmails[7]))
+        && (data.invitedEmails.size() < 9 || isValidEmail(data.invitedEmails[8]))
+        && (data.invitedEmails.size() < 10 || isValidEmail(data.invitedEmails[9]))
+        && (data.invitedEmails.size() < 11 || isValidEmail(data.invitedEmails[10]))
+        && (data.invitedEmails.size() < 12 || isValidEmail(data.invitedEmails[11]))
+        && (data.invitedEmails.size() < 13 || isValidEmail(data.invitedEmails[12]))
+        && (data.invitedEmails.size() < 14 || isValidEmail(data.invitedEmails[13]))
+        && (data.invitedEmails.size() < 15 || isValidEmail(data.invitedEmails[14]))
+        && (data.invitedEmails.size() < 16 || isValidEmail(data.invitedEmails[15]))
+        && (data.invitedEmails.size() < 17 || isValidEmail(data.invitedEmails[16]))
+        && (data.invitedEmails.size() < 18 || isValidEmail(data.invitedEmails[17]))
+        && (data.invitedEmails.size() < 19 || isValidEmail(data.invitedEmails[18]))
+        && (data.invitedEmails.size() < 20 || isValidEmail(data.invitedEmails[19]))
+        && (data.invitedEmails.size() < 21 || isValidEmail(data.invitedEmails[20]))
+        && (data.invitedEmails.size() < 22 || isValidEmail(data.invitedEmails[21]))
+        && (data.invitedEmails.size() < 23 || isValidEmail(data.invitedEmails[22]))
+        && (data.invitedEmails.size() < 24 || isValidEmail(data.invitedEmails[23]))
+        && (data.invitedEmails.size() < 25 || isValidEmail(data.invitedEmails[24]))
+        && (data.invitedEmails.size() < 26 || isValidEmail(data.invitedEmails[25]))
+        && (data.invitedEmails.size() < 27 || isValidEmail(data.invitedEmails[26]))
+        && (data.invitedEmails.size() < 28 || isValidEmail(data.invitedEmails[27]))
+        && (data.invitedEmails.size() < 29 || isValidEmail(data.invitedEmails[28]))
+        && (data.invitedEmails.size() < 30 || isValidEmail(data.invitedEmails[29]));
+    }
+
+    function anonymousTokenEdit() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt'
+      ]);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /staff/{uid} {
+      allow get: if isOwner(uid);
+      allow list, create, update, delete: if false;
+    }
+
+    match /meta/{docId} {
+      allow get: if isAuthenticated() && docId == 'bootstrap';
+      allow list, create, update, delete: if false;
+    }
+
+    match /settings/{docId} {
+      allow get: if isStaff() && docId == 'venue';
+      allow list: if false;
+      allow create, update: if isStaff() && docId == 'venue' && isValidVenue(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /artists/{artistId} {
+      allow list: if isStaff();
+      allow get: if isStaff()
+        && artistId.matches('^[a-z0-9-]{1,80}$')
+        && (!('uid' in resource.data) || isDocOwner());
+      allow create: if isStaff()
+        && artistId.matches('^[a-z0-9-]{1,80}$')
+        && isValidArtist(request.resource.data)
+        && uidUnchanged();
+      allow update: if isStaff()
+        && artistId.matches('^[a-z0-9-]{1,80}$')
+        && isValidArtist(request.resource.data)
+        && uidNotModified();
+      allow delete: if isStaff() && artistId.matches('^[a-z0-9-]{1,80}$');
+    }
+
+    match /publicKits/{artistId} {
+      allow get: if artistId.matches('^[a-z0-9-]{1,80}$');
+      allow list: if false;
+      allow create, update: if isStaff()
+        && artistId.matches('^[a-z0-9-]{1,80}$')
+        && isValidPublicKit(request.resource.data);
+      allow delete: if isStaff();
+    }
+
+    match /tokens/{token} {
+      allow get: if token.matches('^[A-Za-z0-9]{8,64}$');
+      allow list: if isStaff();
+      allow create: if isStaff()
+        && token.matches('^[A-Za-z0-9]{8,64}$')
+        && isValidToken(request.resource.data);
+      allow update: if token.matches('^[A-Za-z0-9]{8,64}$')
+        && isValidToken(request.resource.data)
+        && request.resource.data.artistId == resource.data.artistId
+        && (isStaff() || anonymousTokenEdit());
+      allow delete: if isStaff();
+    }
+  }
+}
