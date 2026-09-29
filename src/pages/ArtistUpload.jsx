@@ -141,21 +141,52 @@ export default function ArtistUpload() {
   const [waitlistAnswered, setWaitlistAnswered] = useState(false)
   const [openedAt] = useState(() => Date.now())
   const loggedOpen = useRef('')
+  const [loadedFor, setLoadedFor] = useState(artist?.id)
   const [bio, setBio] = useState(artist?.bio ?? '')
   const [socials, setSocials] = useState({
     instagram: artist?.contact.instagram ?? '',
     spotify: artist?.contact.spotify ?? '',
     youtube: artist?.contact.youtube ?? '',
   })
+  const unsaved = useRef({ artistId: null, bio: null, contact: null, timer: null })
+
+  // Fields are only loaded once per artist; later remote updates would clobber text still being typed.
+  if (artist && loadedFor !== artist.id) {
+    setLoadedFor(artist.id)
+    setBio(artist.bio ?? '')
+    setSocials({
+      instagram: artist.contact.instagram ?? '',
+      spotify: artist.contact.spotify ?? '',
+      youtube: artist.contact.youtube ?? '',
+    })
+  }
+
+  const flushRef = useRef(() => {})
+  flushRef.current = () => {
+    const edits = unsaved.current
+    window.clearTimeout(edits.timer)
+    if (edits.artistId && edits.bio != null) updateBio(edits.artistId, edits.bio)
+    if (edits.artistId && edits.contact) updateContact(edits.artistId, edits.contact)
+    unsaved.current = { artistId: null, bio: null, contact: null, timer: null }
+  }
 
   useEffect(() => {
-    setBio(artist?.bio ?? '')
-    setSocials({
-      instagram: artist?.contact.instagram ?? '',
-      spotify: artist?.contact.spotify ?? '',
-      youtube: artist?.contact.youtube ?? '',
-    })
-  }, [artist?.id, artist?.bio, artist?.contact.instagram, artist?.contact.spotify, artist?.contact.youtube])
+    const flush = () => flushRef.current()
+    window.addEventListener('pagehide', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      flush()
+    }
+  }, [])
+
+  function queueEdit(edit) {
+    const edits = unsaved.current
+    window.clearTimeout(edits.timer)
+    edits.artistId = artist.id
+    if (edit.bio != null) edits.bio = edit.bio
+    if (edit.contact) edits.contact = { ...edits.contact, ...edit.contact }
+    edits.timer = window.setTimeout(() => flushRef.current(), 600)
+  }
 
   useEffect(() => {
     if (!artist || loggedOpen.current === artist.id) return
@@ -193,20 +224,21 @@ export default function ArtistUpload() {
     setSavedFor(null)
     if (!artist) return
     trackOncePerSession('bio_edited', artist.id)
-    updateBio(artist.id, value)
+    queueEdit({ bio: value })
   }
 
   function onSocialChange(key, value) {
     setSocials((current) => ({ ...current, [key]: value }))
     setSavedFor(null)
-    if (artist) updateContact(artist.id, { [key]: value })
+    if (artist) queueEdit({ contact: { [key]: value } })
   }
 
   function save() {
+    flushRef.current()
     submitAssets(artist.id)
     track('assets_saved', artist.id, {
       media: artist.media.length,
-      bioLength: (artist.bio || '').length,
+      bioLength: bio.length,
       seconds: Math.min(Math.round((Date.now() - openedAt) / 1000), 2592000),
     })
     track('preview_shown', artist.id)

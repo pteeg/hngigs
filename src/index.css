@@ -2333,17 +2333,81 @@ textarea.upload-bio {
 .pk-follow-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 10px 0;
+}
+
+.pk-follow-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   color: var(--text);
 }
 
-.pk-follow-row:hover {
+.pk-follow-link:hover {
   color: var(--text);
 }
 
-.pk-follow-row:hover .pk-follow-arrow {
+.pk-follow-link:hover .pk-follow-arrow {
   color: var(--red);
+}
+
+.pk-copy {
+  appearance: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--label);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.pk-copy:hover {
+  background: var(--bg-soft);
+  color: var(--text);
+}
+
+.pk-copy.is-copied {
+  color: var(--ok-ink);
+}
+
+.pk-copy.is-on-red {
+  color: var(--card);
+}
+
+.pk-copy.is-on-red:hover,
+.pk-copy.is-on-red.is-copied {
+  background: var(--glass-strong);
+  color: var(--card);
+}
+
+.pk-booking-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pk-download-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--glass-strong);
+  color: var(--card);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .pk-follow-text {

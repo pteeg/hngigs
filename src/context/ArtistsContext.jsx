@@ -21,6 +21,7 @@ import {
   overlayToken,
   publicSignature,
   saveArtistRecord,
+  saveOverlayRecord,
   saveTokenRecord,
 } from '../lib/artistRecords'
 import { useAuth } from './AuthContext'
@@ -108,13 +109,14 @@ export function ArtistsProvider({ children }) {
         )
         unsubTokens = onSnapshot(collection(db, 'tokens'), (snap) => {
           snap.docs.forEach((item) => {
+            if (item.metadata.hasPendingWrites) return
             const tokenArtist = fromTokenDoc(item.id, item.data())
             const current = artistsRef.current.find((artist) => artist.id === tokenArtist.id)
             if (!current || pending.current.has(current.id)) return
             if (publicSignature(current) === publicSignature(tokenArtist)) return
             const next = overlayToken(current, tokenArtist)
             pending.current.set(next.id, next)
-            saveArtistRecord(next)
+            saveOverlayRecord(next)
               .catch(() => {})
               .finally(() => pending.current.delete(next.id))
           })
@@ -195,6 +197,7 @@ export function ArtistsProvider({ children }) {
     const current = artistsRef.current.find((artist) => artist.id === id)
     if (!current) return null
     const next = recipe(current)
+    artistsRef.current = artistsRef.current.map((artist) => (artist.id === id ? next : artist))
     setArtists((list) => list.map((artist) => (artist.id === id ? next : artist)))
     persist(next)
     return next

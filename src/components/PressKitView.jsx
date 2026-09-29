@@ -7,6 +7,8 @@ import {
   IconBrandInstagram,
   IconBrandSpotify,
   IconBrandYoutube,
+  IconCheck,
+  IconCopy,
   IconDownload,
 } from '@tabler/icons-react'
 
@@ -16,9 +18,41 @@ const SOCIAL_ICONS = {
   youtube: IconBrandYoutube,
 }
 
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function CopyIconButton({ text, label, className = '' }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    if (!(await copyText(text))) return
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <button
+      type="button"
+      className={'pk-copy' + (className ? ` ${className}` : '') + (copied ? ' is-copied' : '')}
+      onClick={copy}
+      aria-label={copied ? `${label} copied` : `Copy ${label}`}
+      title={copied ? 'Copied' : `Copy ${label}`}
+    >
+      {copied ? <IconCheck size={15} stroke={2} /> : <IconCopy size={15} stroke={1.6} />}
+    </button>
+  )
+}
+
 export default function PressKitView({ artist, publicView = false, preview = false, heroActions = null, onDownload }) {
   const [downloading, setDownloading] = useState(false)
   const [previewItem, setPreviewItem] = useState(null)
+  const [bioCopied, setBioCopied] = useState(false)
 
   const { bio, email, photos, youtubeLinks, socials } = pressKitData(artist)
   const canDownload = artist.media.some((m) => m.url) || Boolean(bio)
@@ -36,6 +70,18 @@ export default function PressKitView({ artist, publicView = false, preview = fal
     } finally {
       setDownloading(false)
     }
+  }
+
+  function downloadAll() {
+    if (downloading) return
+    if (bio) {
+      copyText(bio).then((ok) => {
+        if (!ok) return
+        setBioCopied(true)
+        window.setTimeout(() => setBioCopied(false), 3500)
+      })
+    }
+    download()
   }
 
   const kit = (
@@ -70,12 +116,18 @@ export default function PressKitView({ artist, publicView = false, preview = fal
                     type="button"
                     className="pk-download"
                     title="Photos + videos (.zip) and bio (.md)"
-                    onClick={() => download()}
+                    onClick={downloadAll}
                     disabled={downloading}
                   >
                     <IconDownload size={18} stroke={2} />
                     {downloading ? 'Preparing zip…' : 'Download all'}
                   </button>
+                )}
+                {bioCopied && (
+                  <span className="pk-download-note" role="status">
+                    <IconCheck size={15} stroke={2.2} />
+                    Bio copied to clipboard
+                  </span>
                 )}
               </div>
             )}
@@ -98,16 +150,19 @@ export default function PressKitView({ artist, publicView = false, preview = fal
                     {socials.map((s) => {
                       const Icon = SOCIAL_ICONS[s.key]
                       return (
-                        <a key={s.key} className="pk-follow-row" href={s.href} target="_blank" rel="noreferrer">
-                          <span className="pk-follow-icon" aria-hidden="true">
-                            <Icon size={18} stroke={1.5} />
-                          </span>
-                          <span className="pk-follow-text">
-                            <span className="pk-follow-name">{s.name}</span>
-                            <span className="pk-follow-handle">{s.handle}</span>
-                          </span>
-                          <IconArrowUpRight size={16} stroke={1.8} className="pk-follow-arrow" />
-                        </a>
+                        <div key={s.key} className="pk-follow-row">
+                          <a className="pk-follow-link" href={s.href} target="_blank" rel="noreferrer">
+                            <span className="pk-follow-icon" aria-hidden="true">
+                              <Icon size={18} stroke={1.5} />
+                            </span>
+                            <span className="pk-follow-text">
+                              <span className="pk-follow-name">{s.name}</span>
+                              <span className="pk-follow-handle">{s.handle}</span>
+                            </span>
+                            <IconArrowUpRight size={16} stroke={1.8} className="pk-follow-arrow" />
+                          </a>
+                          <CopyIconButton text={s.href} label={`${s.name} link`} />
+                        </div>
                       )
                     })}
                   </section>
@@ -116,7 +171,10 @@ export default function PressKitView({ artist, publicView = false, preview = fal
                 {email && (
                   <section className="pk-card pk-booking">
                     <div className="pk-label">Booking &amp; contact</div>
-                    <a className="pk-booking-email" href={`mailto:${email}`}>{email}</a>
+                    <div className="pk-booking-row">
+                      <a className="pk-booking-email" href={`mailto:${email}`}>{email}</a>
+                      <CopyIconButton text={email} label="email" className="is-on-red" />
+                    </div>
                   </section>
                 )}
               </aside>

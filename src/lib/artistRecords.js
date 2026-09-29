@@ -207,6 +207,17 @@ export async function saveArtistRecord(artist, previousToken) {
   return ready
 }
 
+// Mirrors token edits into the staff copies without touching the token itself,
+// so a late echo can't overwrite newer edits the artist is still making.
+export async function saveOverlayRecord(artist) {
+  const ready = prepareArtist(artist)
+  const batch = writeBatch(db)
+  batch.set(doc(db, 'artists', ready.id), toArtistDoc(ready))
+  batch.set(doc(db, 'publicKits', ready.id), toPublicDoc(ready))
+  await batch.commit()
+  return ready
+}
+
 export async function saveTokenRecord(artist) {
   const ready = prepareArtist(artist)
   await setDoc(doc(db, 'tokens', ready.uploadToken), toTokenDoc(ready))
