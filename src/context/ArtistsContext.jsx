@@ -5,12 +5,12 @@ import { signOut } from 'firebase/auth'
 import {
   assetsFromArtist,
   createArtist,
-  fileToMediaItem,
   initialsFromName,
   newUploadToken,
   uniqueArtistId,
 } from '../data/artists'
 import { auth, db } from '../lib/firebase'
+import { deleteArtistMedia, deleteMediaFile, uploadMediaFile } from '../lib/media'
 import { ensureStaffProfile } from '../lib/staff'
 import { logStaff, logStaffSessionOnce } from '../lib/staffLog'
 import {
@@ -113,8 +113,8 @@ export function ArtistsProvider({ children }) {
             const tokenArtist = fromTokenDoc(item.id, item.data())
             const current = artistsRef.current.find((artist) => artist.id === tokenArtist.id)
             if (!current || pending.current.has(current.id)) return
-            if (publicSignature(current) === publicSignature(tokenArtist)) return
             const next = overlayToken(current, tokenArtist)
+            if (publicSignature(current) === publicSignature(next)) return
             pending.current.set(next.id, next)
             saveOverlayRecord(next)
               .catch(() => {})
@@ -203,23 +203,23 @@ export function ArtistsProvider({ children }) {
     return next
   }, [persist])
 
-  const addMedia = useCallback((id, files) => {
-    const list = Array.from(files ?? [])
-    if (!list.length) return
-    Promise.all(list.map(fileToMediaItem)).then((items) => {
-      if (!items.length) return
-      replaceArtist(id, (artist) => {
-        const media = [...artist.media, ...items]
-        return { ...artist, media, assets: assetsFromArtist({ ...artist, media }) }
-      })
+  const uploadMedia = useCallback(async (id, file, onProgress) => {
+    const artist = artistsRef.current.find((item) => item.id === id)
+    if (!artist) return null
+    const item = await uploadMediaFile(artist, file, onProgress)
+    return replaceArtist(id, (current) => {
+      const media = [...current.media, item]
+      return { ...current, media, assets: assetsFromArtist({ ...current, media }) }
     })
   }, [replaceArtist])
 
   const removeMedia = useCallback((id, index) => {
-    replaceArtist(id, (artist) => {
+    const removed = artistsRef.current.find((artist) => artist.id === id)?.media[index]
+    const next = replaceArtist(id, (artist) => {
       const media = artist.media.filter((_, itemIndex) => itemIndex !== index)
       return { ...artist, media, assets: assetsFromArtist({ ...artist, media }) }
     })
+    if (next && removed) deleteMediaFile(next, removed.url)
   }, [replaceArtist])
 
   const updateBio = useCallback((id, bio) => {
@@ -253,7 +253,10 @@ export function ArtistsProvider({ children }) {
   const saveArtist = useCallback(async ({ id, name, tagline, contact, bio, media = [], files = [], actType }) => {
     const trimmed = name.trim()
     if (!trimmed) return null
-    const added = files.length ? await Promise.all(Array.from(files).map(fileToMediaItem)) : []
+    const current = id ? artists.find((artist) => artist.id === id) : null
+    if (id && !current) return null
+    const owner = current ?? { id: uniqueArtistId(trimmed, artists), uploadToken: newUploadToken() }
+    const added = await Promise.all(Array.from(files).map((file) => uploadMediaFile(owner, file)))
     const nextMedia = [...media, ...added]
     const nextContact = {
       email: contact?.email?.trim() || '',
@@ -263,9 +266,7 @@ export function ArtistsProvider({ children }) {
       youtube: contact?.youtube?.trim() || '',
     }
 
-    if (id) {
-      const current = artists.find((artist) => artist.id === id)
-      if (!current) return null
+    if (current) {
       const next = {
         ...current,
         name: trimmed,
@@ -280,18 +281,20 @@ export function ArtistsProvider({ children }) {
       next.assets = assetsFromArtist(next)
       setArtists((list) => list.map((artist) => (artist.id === id ? next : artist)))
       await persist(next)
+      const kept = new Set(nextMedia.map((item) => item.url))
+      current.media.filter((item) => !kept.has(item.url)).forEach((item) => deleteMediaFile(next, item.url))
       if (user) logStaff('artist_edited', { artistId: id, detail: trimmed })
       return next
     }
 
     const next = createArtist(trimmed, {
-      id: uniqueArtistId(trimmed, artists),
+      id: owner.id,
       contact: nextContact,
       bio,
       tagline,
       media: nextMedia,
       actType,
-      uploadToken: newUploadToken(),
+      uploadToken: owner.uploadToken,
     })
     setArtists((list) => [...list, next])
     await persist(next)
@@ -309,6 +312,7 @@ export function ArtistsProvider({ children }) {
     setArtists((list) => list.filter((artist) => artist.id !== id))
     if (current && user) {
       deleteArtistRecord(current).catch(() => {})
+      deleteArtistMedia(id)
       logStaff('artist_deleted', { artistId: id, detail: current.name })
     }
   }, [artists, user])
@@ -321,7 +325,7 @@ export function ArtistsProvider({ children }) {
       getArtistByToken,
       generateLink,
       ensureUploadLink,
-      addMedia,
+      uploadMedia,
       removeMedia,
       updateBio,
       updateContact,
@@ -338,7 +342,7 @@ export function ArtistsProvider({ children }) {
       getArtistByToken,
       generateLink,
       ensureUploadLink,
-      addMedia,
+      uploadMedia,
       removeMedia,
       updateBio,
       updateContact,

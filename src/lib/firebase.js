@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getFunctions } from 'firebase/functions'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -19,5 +21,8 @@ export const auth = getAuth(app)
 // staff share one artist list and artist-link edits need to show up while the CRM is open.
 export const FIRESTORE_DATABASE_ID = 'hngigs'
 export const db = getFirestore(app, FIRESTORE_DATABASE_ID)
+
+export const storage = getStorage(app)
+export const functions = getFunctions(app, 'europe-west2')
 
 export { app }

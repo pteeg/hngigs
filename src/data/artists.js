@@ -277,20 +277,6 @@ export function filesToMedia(files) {
   }))
 }
 
-export function fileToMediaItem(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () =>
-      resolve({
-        type: file.type.startsWith('video') ? 'video' : 'photo',
-        label: file.name,
-        url: typeof reader.result === 'string' ? reader.result : URL.createObjectURL(file),
-      })
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
-}
-
 export function withHttps(url) {
   const trimmed = (url || '').trim()
   if (!trimmed) return ''

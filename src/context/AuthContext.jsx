@@ -32,7 +32,8 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     return onAuthStateChanged(auth, (next) => {
-      setUser(next)
+      // Anonymous sessions only exist so artists can upload files; they are not staff.
+      setUser(next && !next.isAnonymous ? next : null)
       setReady(true)
     })
   }, [])

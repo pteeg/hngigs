@@ -124,8 +124,14 @@ export function toPublicDoc(artist) {
   return publicFields(artist)
 }
 
+// Tokens also carry email and phone so artists can edit them from their link.
+// They never reach publicKits.
 export function toTokenDoc(artist) {
-  return { artistId: artist.id, ...publicFields(artist) }
+  const ready = prepareArtist(artist)
+  const contact = publicContact(ready.contact)
+  if (artist.contact?.email != null) contact.email = ready.contact.email
+  if (artist.contact?.phone != null) contact.phone = ready.contact.phone
+  return { artistId: artist.id, ...publicFields(ready), contact }
 }
 
 function fromTimestamps(data) {
@@ -159,8 +165,13 @@ export function fromPublicDoc(id, data) {
   return artist
 }
 
+// Email and phone are null when the token predates them, so overlays keep the staff copy.
 export function fromTokenDoc(token, data) {
-  return fromPublicDoc(data.artistId, { ...data, uploadToken: token })
+  const artist = fromPublicDoc(data.artistId, data)
+  artist.uploadToken = token
+  artist.contact.email = typeof data.contact?.email === 'string' ? data.contact.email : null
+  artist.contact.phone = typeof data.contact?.phone === 'string' ? data.contact.phone : null
+  return artist
 }
 
 export function publicSignature(artist) {
@@ -172,6 +183,8 @@ export function publicSignature(artist) {
     links: ready.links,
     assets: ready.assets,
     submittedAt: ready.submittedAt,
+    email: ready.contact.email,
+    phone: ready.contact.phone,
     instagram: ready.contact.instagram,
     spotify: ready.contact.spotify,
     youtube: ready.contact.youtube,
@@ -189,6 +202,8 @@ export function overlayToken(artist, tokenArtist) {
     submittedAt: tokenArtist.submittedAt,
     contact: {
       ...artist.contact,
+      email: tokenArtist.contact?.email ?? artist.contact?.email ?? '',
+      phone: tokenArtist.contact?.phone ?? artist.contact?.phone ?? '',
       instagram: tokenArtist.contact?.instagram || '',
       spotify: tokenArtist.contact?.spotify || '',
       youtube: tokenArtist.contact?.youtube || '',

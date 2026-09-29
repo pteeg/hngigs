@@ -32,6 +32,7 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
   const [form, setForm] = useState(() => formFromArtist(artist))
   const [pendingFiles, setPendingFiles] = useState([])
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [previewIndex, setPreviewIndex] = useState(null)
   const [created, setCreated] = useState(null)
   const [copied, setCopied] = useState(false)
@@ -74,6 +75,7 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
     event.preventDefault()
     if (!form.name.trim() || saving) return
     setSaving(true)
+    setSaveError('')
     try {
       const saved = await saveArtist({
         id: artist?.id,
@@ -87,6 +89,8 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
       })
       if (!editing && saved) setCreated(saved)
       else onClose()
+    } catch {
+      setSaveError('Couldn’t upload the files. Check your connection and try again.')
     } finally {
       setSaving(false)
     }
@@ -323,6 +327,7 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
           </>
         )}
 
+        {saveError && <p className="upload-hint upload-notice">{saveError}</p>}
         <div className="ad-modal-footer">
           {editing && (
             <button

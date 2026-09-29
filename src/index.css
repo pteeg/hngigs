@@ -1659,6 +1659,35 @@ textarea.upload-bio {
   color: var(--text);
 }
 
+.upload-list li.upload-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-progress-text {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.upload-progress.is-failed .upload-progress-text {
+  color: var(--red);
+}
+
+.upload-progress-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--red);
+  transition: width 0.2s ease;
+}
+
+.upload-notice {
+  margin-top: 10px;
+}
+
 /* Asset links */
 .asset-links {
   display: flex;

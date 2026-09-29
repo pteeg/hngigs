@@ -6,7 +6,8 @@
   },
   "auth": {
     "providers": {
-      "emailPassword": true
+      "emailPassword": true,
+      "anonymous": true
     },
     "authorizedDomains": [
       "localhost",
@@ -23,6 +24,9 @@
       "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
     }
   ],
+  "storage": {
+    "rules": "storage.rules"
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json",

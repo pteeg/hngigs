@@ -5,6 +5,7 @@ import AssetLinks from '../components/AssetLinks'
 import MediaPreviewModal from '../components/MediaPreviewModal'
 import PressKitView from '../components/PressKitView'
 import { uploadUrl } from '../data/artists'
+import { MAX_MEDIA, mediaProblem } from '../lib/media'
 import { track, trackOncePerSession } from '../lib/track'
 import { isValidWaitlistEmail, saveWaitlistAnswer } from '../lib/waitlist'
 import {
@@ -16,6 +17,8 @@ import {
   IconEdit,
   IconEye,
   IconGift,
+  IconMail,
+  IconPhone,
   IconPhoto,
   IconUpload,
   IconX,
@@ -131,7 +134,7 @@ function WaitlistQuestion({ onAnswer }) {
 
 export default function ArtistUpload() {
   const { token } = useParams()
-  const { getArtistByToken, ready, addMedia, removeMedia, updateBio, updateContact, addLink, removeLink, submitAssets } = useArtists()
+  const { getArtistByToken, ready, uploadMedia, removeMedia, updateBio, updateContact, addLink, removeLink, submitAssets } = useArtists()
   const artist = getArtistByToken(token)
   const fileRef = useRef(null)
   const [previewIndex, setPreviewIndex] = useState(null)
@@ -148,6 +151,12 @@ export default function ArtistUpload() {
     spotify: artist?.contact.spotify ?? '',
     youtube: artist?.contact.youtube ?? '',
   })
+  const [email, setEmail] = useState(artist?.contact.email ?? '')
+  const [phone, setPhone] = useState(artist?.contact.phone ?? '')
+  const [emailError, setEmailError] = useState(false)
+  const [uploads, setUploads] = useState([])
+  const [uploadNotice, setUploadNotice] = useState('')
+  const uploading = uploads.some((upload) => !upload.failed)
   const unsaved = useRef({ artistId: null, bio: null, contact: null, timer: null })
 
   // Fields are only loaded once per artist; later remote updates would clobber text still being typed.
@@ -159,16 +168,20 @@ export default function ArtistUpload() {
       spotify: artist.contact.spotify ?? '',
       youtube: artist.contact.youtube ?? '',
     })
+    setEmail(artist.contact.email ?? '')
+    setPhone(artist.contact.phone ?? '')
   }
 
   const flushRef = useRef(() => {})
-  flushRef.current = () => {
-    const edits = unsaved.current
-    window.clearTimeout(edits.timer)
-    if (edits.artistId && edits.bio != null) updateBio(edits.artistId, edits.bio)
-    if (edits.artistId && edits.contact) updateContact(edits.artistId, edits.contact)
-    unsaved.current = { artistId: null, bio: null, contact: null, timer: null }
-  }
+  useEffect(() => {
+    flushRef.current = () => {
+      const edits = unsaved.current
+      window.clearTimeout(edits.timer)
+      if (edits.artistId && edits.bio != null) updateBio(edits.artistId, edits.bio)
+      if (edits.artistId && edits.contact) updateContact(edits.artistId, edits.contact)
+      unsaved.current = { artistId: null, bio: null, contact: null, timer: null }
+    }
+  }, [updateBio, updateContact])
 
   useEffect(() => {
     const flush = () => flushRef.current()
@@ -195,27 +208,45 @@ export default function ArtistUpload() {
     if (artist.submittedAt) track('returned_visit', artist.id)
   }, [artist])
 
-  function onFiles(event) {
-    const files = event.target.files
-    if (!files?.length || !artist) return
-    track('media_added', artist.id, countFiles(files))
-    addMedia(artist.id, files)
+  function startUploads(files) {
+    if (!artist) return
+    const room = MAX_MEDIA - artist.media.length - uploads.filter((upload) => !upload.failed).length
+    const accepted = []
+    const problems = []
+    for (const file of Array.from(files ?? [])) {
+      const problem = mediaProblem(file)
+      if (problem) problems.push(problem)
+      else if (accepted.length < room) accepted.push(file)
+      else problems.push(`${file.name} wasn’t added. You can have up to ${MAX_MEDIA} photos and videos.`)
+    }
+    setUploadNotice(problems.join(' '))
+    if (!accepted.length) return
+    track('media_added', artist.id, countFiles(accepted))
     setSavedFor(null)
+    for (const file of accepted) {
+      const key = `${Date.now()}-${Math.random()}`
+      const patch = (change) =>
+        setUploads((current) => current.map((upload) => (upload.key === key ? { ...upload, ...change } : upload)))
+      setUploads((current) => [...current, { key, name: file.name, progress: 0, failed: false }])
+      uploadMedia(artist.id, file, (progress) => patch({ progress }))
+        .then(() => setUploads((current) => current.filter((upload) => upload.key !== key)))
+        .catch(() => patch({ failed: true }))
+    }
+  }
+
+  function dismissUpload(key) {
+    setUploads((current) => current.filter((upload) => upload.key !== key))
+  }
+
+  function onFiles(event) {
+    startUploads(event.target.files)
     event.target.value = ''
   }
 
   function onDrop(event) {
     event.preventDefault()
     setDragging(false)
-    if (!artist) return
-    const files = Array.from(event.dataTransfer.files ?? []).filter(
-      (file) => file.type.startsWith('image/') || file.type.startsWith('video/'),
-    )
-    if (files.length) {
-      track('media_added', artist.id, countFiles(files))
-      addMedia(artist.id, files)
-      setSavedFor(null)
-    }
+    startUploads(event.dataTransfer.files)
   }
 
   function onBioChange(event) {
@@ -233,7 +264,30 @@ export default function ArtistUpload() {
     if (artist) queueEdit({ contact: { [key]: value } })
   }
 
+  function onEmailChange(value) {
+    setEmail(value)
+    setEmailError(false)
+    setSavedFor(null)
+    const clean = value.trim()
+    if (artist && (!clean || isValidWaitlistEmail(clean))) queueEdit({ contact: { email: clean } })
+  }
+
+  function onPhoneChange(value) {
+    setPhone(value)
+    setSavedFor(null)
+    if (artist) queueEdit({ contact: { phone: value.trim() } })
+  }
+
+  function emailLooksWrong() {
+    const clean = email.trim()
+    return Boolean(clean) && !isValidWaitlistEmail(clean)
+  }
+
   function save() {
+    if (emailLooksWrong()) {
+      setEmailError(true)
+      return
+    }
     flushRef.current()
     submitAssets(artist.id)
     track('assets_saved', artist.id, {
@@ -315,7 +369,7 @@ export default function ArtistUpload() {
           </section>
 
           <div className="field-label upload-kit-label">Your press kit</div>
-          <PressKitView artist={artist} preview />
+          <PressKitView artist={{ ...artist, contact: { ...artist.contact, email: '', phone: '' } }} preview />
 
           <section className="upload-card upload-done">
             <div className="field-label upload-gift-label">
@@ -382,7 +436,7 @@ export default function ArtistUpload() {
           </div>
 
           <div className="upload-section">
-            <div className="field-label">Socials</div>
+            <div className="field-label">Socials &amp; contact</div>
             <div className="upload-socials">
               {SOCIALS.map(({ key, label, Icon, placeholder }) => (
                 <label className="upload-social-row" key={key}>
@@ -399,7 +453,44 @@ export default function ArtistUpload() {
                   />
                 </label>
               ))}
+              <label className="upload-social-row">
+                <span className="upload-social-icon" aria-hidden="true">
+                  <IconMail size={20} stroke={1.5} />
+                </span>
+                <input
+                  type="email"
+                  className="input-bare"
+                  aria-label="Email"
+                  aria-invalid={emailError}
+                  value={email}
+                  onChange={(e) => onEmailChange(e.target.value)}
+                  onBlur={() => setEmailError(emailLooksWrong())}
+                  placeholder="Email (optional)"
+                  autoComplete="email"
+                  maxLength={120}
+                />
+              </label>
+              <label className="upload-social-row">
+                <span className="upload-social-icon" aria-hidden="true">
+                  <IconPhone size={20} stroke={1.5} />
+                </span>
+                <input
+                  type="tel"
+                  className="input-bare"
+                  aria-label="Phone"
+                  value={phone}
+                  onChange={(e) => onPhoneChange(e.target.value)}
+                  placeholder="Phone (optional)"
+                  autoComplete="tel"
+                  maxLength={40}
+                />
+              </label>
             </div>
+            <span className="upload-hint">
+              {emailError
+                ? 'That email doesn’t look right. Check it or leave it blank.'
+                : 'Your email and phone are only shared with Hot Numbers, not shown on your press kit.'}
+            </span>
           </div>
 
           <div className="upload-section">
@@ -475,11 +566,38 @@ export default function ArtistUpload() {
                   </button>
                 </li>
               ))}
+              {uploads.map((upload) => (
+                <li key={upload.key} className={'upload-progress' + (upload.failed ? ' is-failed' : '')}>
+                  <span className="upload-thumb" aria-hidden="true">
+                    <IconUpload size={16} stroke={1.6} />
+                  </span>
+                  <span className="upload-item-name">{upload.name}</span>
+                  {upload.failed ? (
+                    <>
+                      <span className="upload-progress-text">Upload failed</span>
+                      <button
+                        type="button"
+                        className="upload-remove"
+                        onClick={() => dismissUpload(upload.key)}
+                        aria-label={`Dismiss ${upload.name}`}
+                      >
+                        <IconX size={15} stroke={1.6} />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="upload-progress-text">{Math.round(upload.progress * 100)}%</span>
+                  )}
+                  {!upload.failed && (
+                    <span className="upload-progress-bar" style={{ width: `${Math.round(upload.progress * 100)}%` }} />
+                  )}
+                </li>
+              ))}
             </AssetLinks>
+            {uploadNotice && <p className="upload-hint upload-notice">{uploadNotice}</p>}
           </div>
 
-          <button type="button" className="btn btn-primary btn-submit" onClick={save}>
-            Save
+          <button type="button" className="btn btn-primary btn-submit" onClick={save} disabled={uploading}>
+            {uploading ? 'Uploading…' : 'Save'}
           </button>
         </section>
       </div>

@@ -32,7 +32,8 @@ rules_version = '2';
 //   - gigs: int 0-10000
 //   - assets: "received" | "partial" | "sent" | "none"
 //   - contact: map email, phone, instagram, spotify, youtube
-//   - media: list <= 6 of {type, label, url}
+//   - media: list <= 6 of {type, label, url}; url is a Firebase Storage download URL
+//     (media/{artistId}/..., see storage.rules) or a legacy inline data URL
 //   - links: list <= 8 of {url, label}
 //   - gigHistory: list <= 8 of {date, name}
 //   - uploadToken: string 8-64
@@ -48,8 +49,9 @@ rules_version = '2';
 //
 // Collection: tokens
 // Document ID: the unguessable upload token
-// Same public fields as a kit, plus artistId.
-// Access: anyone who knows the token may get and update the editable public fields.
+// Same public fields as a kit, plus artistId. contact may also hold the artist's
+// email and phone (optional keys) so they can edit them; these never reach publicKits.
+// Access: anyone who knows the token may get and update the editable fields.
 // Only staff may list tokens or create them.
 //
 // Collection: events
@@ -240,6 +242,17 @@ service cloud.firestore {
         && contact.youtube is string && contact.youtube.size() <= 300;
     }
 
+    function isValidTokenContact(contact) {
+      return contact is map
+        && contact.keys().hasOnly(['email', 'phone', 'instagram', 'spotify', 'youtube'])
+        && (!('email' in contact) || (contact.email is string && contact.email.size() <= 120
+          && (contact.email.size() == 0 || isValidEmail(contact.email))))
+        && (!('phone' in contact) || (contact.phone is string && contact.phone.size() <= 40))
+        && contact.instagram is string && contact.instagram.size() <= 200
+        && contact.spotify is string && contact.spotify.size() <= 300
+        && contact.youtube is string && contact.youtube.size() <= 300;
+    }
+
     function isValidPrivateContact(contact) {
       return contact is map
         && contact.keys().hasOnly(['email', 'phone', 'instagram', 'spotify', 'youtube'])
@@ -258,7 +271,6 @@ service cloud.firestore {
         && data.bio is string && data.bio.size() <= 8000
         && data.gigs is int && data.gigs >= 0 && data.gigs <= 10000
         && data.assets in ['received', 'partial', 'sent', 'none']
-        && isValidPublicContact(data.contact)
         && mediaItemsOk(data.media)
         && linkItemsOk(data.links)
         && gigItemsOk(data.gigHistory)
@@ -271,7 +283,8 @@ service cloud.firestore {
           'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
           'media', 'links', 'gigHistory', 'linkGeneratedAt', 'submittedAt'
         ])
-        && hasPublicShape(data);
+        && hasPublicShape(data)
+        && isValidPublicContact(data.contact);
     }
 
     function isValidToken(data) {
@@ -281,7 +294,8 @@ service cloud.firestore {
         ])
         && data.artistId is string
         && data.artistId.matches('^[a-z0-9-]{1,80}$')
-        && hasPublicShape(data);
+        && hasPublicShape(data)
+        && isValidTokenContact(data.contact);
     }
 
     function isValidArtist(data) {
