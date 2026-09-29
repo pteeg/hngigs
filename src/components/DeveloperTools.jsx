@@ -205,6 +205,61 @@ function PilotTable({ artists, ready, events, waitlist, staff }) {
   )
 }
 
+function InterestedTable({ waitlist, artists }) {
+  const names = useMemo(() => new Map(artists.map((artist) => [artist.id, artist.name])), [artists])
+  const rows = useMemo(() => {
+    const byArtist = new Map()
+    waitlist
+      .filter((entry) => entry.answer === 'yes' && entry.artistId && entry.ms != null)
+      .sort((a, b) => a.ms - b.ms)
+      .forEach((entry) => {
+        const current = byArtist.get(entry.artistId) ?? { artistId: entry.artistId, first: entry.ms, email: '' }
+        if (entry.email) current.email = entry.email
+        byArtist.set(entry.artistId, current)
+      })
+    return [...byArtist.values()].sort((a, b) => b.first - a.first)
+  }, [waitlist])
+
+  return (
+    <section className="settings-section">
+      <div className="sec-label">Interested in a press kit</div>
+      <div className="list-card pilot-card">
+        <table className="pilot-table">
+          <thead>
+            <tr>
+              <th scope="col">Artist</th>
+              <th scope="col">Email</th>
+              <th scope="col">When</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.artistId}>
+                <th scope="row">
+                  {names.has(row.artistId) ? (
+                    <Link to={`/artists/${row.artistId}`}>{names.get(row.artistId)}</Link>
+                  ) : (
+                    row.artistId
+                  )}
+                </th>
+                <td>
+                  {row.email ? <a href={`mailto:${row.email}`}>{row.email}</a> : <span className="pilot-no">No email</span>}
+                </td>
+                <td className="pilot-nowrap">{formatDate(row.first)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 && <div className="list-empty">No one has said they’re interested yet.</div>}
+      </div>
+      <p className="pilot-note">
+        Artists who tapped “I’m interested” after saving their upload link. The email is the one they entered on the
+        form.
+      </p>
+    </section>
+  )
+}
+
 function StaffAccounts({ staff }) {
   const accounts = useMemo(() => {
     const map = new Map()
@@ -311,6 +366,7 @@ export default function DeveloperTools() {
     <>
       {error && <p className="pilot-error">{error}</p>}
       <PilotTable artists={artists} ready={ready} events={events.docs} waitlist={waitlist.docs} staff={staff.docs} />
+      <InterestedTable waitlist={waitlist.docs} artists={artists} />
       <StaffAccounts staff={staff.docs} />
       <StaffLog staff={staff.docs} artists={artists} />
     </>

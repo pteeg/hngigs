@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import MediaPreviewModal from './MediaPreviewModal'
 import MediaWall from './MediaWall'
-import { downloadPressKit, pressKitData } from '../lib/pressKit'
+import { SOCIAL_KINDS, downloadPressKit, pressKitData } from '../lib/pressKit'
 import {
-  IconArrowUpRight,
   IconBrandInstagram,
   IconBrandSpotify,
   IconBrandYoutube,
   IconCheck,
   IconCopy,
   IconDownload,
+  IconMail,
 } from '@tabler/icons-react'
 
 const SOCIAL_ICONS = {
@@ -49,16 +49,24 @@ function CopyIconButton({ text, label, className = '' }) {
   )
 }
 
-export default function PressKitView({ artist, publicView = false, preview = false, heroActions = null, onDownload }) {
+export default function PressKitView({
+  artist,
+  publicView = false,
+  preview = false,
+  allowDownload = true,
+  heroActions = null,
+  onDownload,
+}) {
   const [downloading, setDownloading] = useState(false)
   const [previewItem, setPreviewItem] = useState(null)
   const [bioCopied, setBioCopied] = useState(false)
 
   const { bio, email, photos, youtubeLinks, socials } = pressKitData(artist)
-  const canDownload = artist.media.some((m) => m.url) || Boolean(bio)
+  const canDownload = allowDownload && (artist.media.some((m) => m.url) || Boolean(bio))
   const heroPhoto = photos.find((p) => p.url)
   const tagline = artist.tagline?.trim()
-  const hasPanel = Boolean(bio) || socials.length > 0 || Boolean(email)
+  const instagram = socials.find((s) => s.key === 'instagram')
+  const hasPanel = Boolean(bio) || Boolean(instagram) || Boolean(email)
   const hasWall = artist.media.length > 0 || youtubeLinks.length > 0
 
   async function download(options) {
@@ -101,7 +109,23 @@ export default function PressKitView({ artist, publicView = false, preview = fal
               {tagline && <div className="pk-tagline">{tagline}</div>}
               <h1 className="pk-name">{artist.name}</h1>
             </div>
-            {(socials.length > 0 || canDownload) && (
+            {preview && (
+              <div className="pk-hero-actions" aria-hidden="true">
+                {SOCIAL_KINDS.map((s) => {
+                  const Icon = SOCIAL_ICONS[s.key]
+                  return (
+                    <span key={s.key} className="pk-social-circle">
+                      <Icon size={20} stroke={1.5} />
+                    </span>
+                  )
+                })}
+                <span className="pk-download is-dummy">
+                  <IconMail size={18} stroke={1.8} />
+                  Email
+                </span>
+              </div>
+            )}
+            {!preview && (socials.length > 0 || canDownload) && (
               <div className="pk-hero-actions">
                 {socials.map((s) => {
                   const Icon = SOCIAL_ICONS[s.key]
@@ -145,36 +169,24 @@ export default function PressKitView({ artist, publicView = false, preview = fal
                   </section>
                 )}
 
-                {socials.length > 0 && (
-                  <section className="pk-card pk-follow" aria-label="Listen and follow">
-                    {socials.map((s) => {
-                      const Icon = SOCIAL_ICONS[s.key]
-                      return (
-                        <div key={s.key} className="pk-follow-row">
-                          <a className="pk-follow-link" href={s.href} target="_blank" rel="noreferrer">
-                            <span className="pk-follow-icon" aria-hidden="true">
-                              <Icon size={18} stroke={1.5} />
-                            </span>
-                            <span className="pk-follow-text">
-                              <span className="pk-follow-name">{s.name}</span>
-                              <span className="pk-follow-handle">{s.handle}</span>
-                            </span>
-                            <IconArrowUpRight size={16} stroke={1.8} className="pk-follow-arrow" />
-                          </a>
-                          <CopyIconButton text={s.href} label={`${s.name} link`} />
-                        </div>
-                      )
-                    })}
-                  </section>
-                )}
-
-                {email && (
+                {(email || instagram) && (
                   <section className="pk-card pk-booking">
                     <div className="pk-label">Booking &amp; contact</div>
-                    <div className="pk-booking-row">
-                      <a className="pk-booking-email" href={`mailto:${email}`}>{email}</a>
-                      <CopyIconButton text={email} label="email" className="is-on-red" />
-                    </div>
+                    {email && (
+                      <div className="pk-booking-row">
+                        <a className="pk-booking-email" href={`mailto:${email}`}>{email}</a>
+                        <CopyIconButton text={email} label="email" className="is-on-red" />
+                      </div>
+                    )}
+                    {instagram && (
+                      <div className="pk-booking-row">
+                        <a className="pk-booking-email pk-booking-social" href={instagram.href} target="_blank" rel="noreferrer">
+                          <IconBrandInstagram size={20} stroke={1.6} aria-hidden="true" />
+                          <span>{instagram.handle}</span>
+                        </a>
+                        <CopyIconButton text={instagram.href} label="Instagram link" className="is-on-red" />
+                      </div>
+                    )}
                   </section>
                 )}
               </aside>
@@ -184,8 +196,11 @@ export default function PressKitView({ artist, publicView = false, preview = fal
               <MediaWall
                 media={artist.media}
                 youtubeLinks={youtubeLinks}
-                onOpen={(media, index) => setPreviewItem({ media, index })}
-                onDownloadPhotos={() => download({ photosOnly: true })}
+                onOpen={(media, index) => {
+                  if (preview && !media[index].url) return
+                  setPreviewItem({ media, index })
+                }}
+                onDownloadPhotos={allowDownload ? () => download({ photosOnly: true }) : null}
                 downloading={downloading}
               />
             )}

@@ -95,7 +95,7 @@ export default function MediaWall({ media, youtubeLinks, onOpen, onDownloadPhoto
   const [filter, setFilter] = useState('all')
   const photoCount = media.filter((m) => m.type === 'photo').length
   const videoCount = media.length - photoCount + youtubeLinks.length
-  const canDownloadPhotos = media.some((m) => m.type === 'photo' && m.url)
+  const canDownloadPhotos = Boolean(onDownloadPhotos) && media.some((m) => m.type === 'photo' && m.url)
 
   const visible = filter === 'all' ? media : media.filter((m) => m.type === filter)
   const showLinks = filter !== 'photo'
