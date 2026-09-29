@@ -18,7 +18,6 @@ import {
   IconEye,
   IconGift,
   IconMail,
-  IconPhone,
   IconPhoto,
   IconUpload,
   IconX,
@@ -152,7 +151,6 @@ export default function ArtistUpload() {
     youtube: artist?.contact.youtube ?? '',
   })
   const [email, setEmail] = useState(artist?.contact.email ?? '')
-  const [phone, setPhone] = useState(artist?.contact.phone ?? '')
   const [emailError, setEmailError] = useState(false)
   const [uploads, setUploads] = useState([])
   const [uploadNotice, setUploadNotice] = useState('')
@@ -169,7 +167,6 @@ export default function ArtistUpload() {
       youtube: artist.contact.youtube ?? '',
     })
     setEmail(artist.contact.email ?? '')
-    setPhone(artist.contact.phone ?? '')
   }
 
   const flushRef = useRef(() => {})
@@ -272,12 +269,6 @@ export default function ArtistUpload() {
     if (artist && (!clean || isValidWaitlistEmail(clean))) queueEdit({ contact: { email: clean } })
   }
 
-  function onPhoneChange(value) {
-    setPhone(value)
-    setSavedFor(null)
-    if (artist) queueEdit({ contact: { phone: value.trim() } })
-  }
-
   function emailLooksWrong() {
     const clean = email.trim()
     return Boolean(clean) && !isValidWaitlistEmail(clean)
@@ -369,7 +360,7 @@ export default function ArtistUpload() {
           </section>
 
           <div className="field-label upload-kit-label">Your press kit</div>
-          <PressKitView artist={{ ...artist, contact: { ...artist.contact, email: '', phone: '' } }} preview />
+          <PressKitView artist={{ ...artist, contact: { ...artist.contact, email: '' } }} preview />
 
           <section className="upload-card upload-done">
             <div className="field-label upload-gift-label">
@@ -438,6 +429,23 @@ export default function ArtistUpload() {
           <div className="upload-section">
             <div className="field-label">Socials &amp; contact</div>
             <div className="upload-socials">
+              <label className="upload-social-row">
+                <span className="upload-social-icon" aria-hidden="true">
+                  <IconMail size={20} stroke={1.5} />
+                </span>
+                <input
+                  type="email"
+                  className="input-bare"
+                  aria-label="Email"
+                  aria-invalid={emailError}
+                  value={email}
+                  onChange={(e) => onEmailChange(e.target.value)}
+                  onBlur={() => setEmailError(emailLooksWrong())}
+                  placeholder="Email"
+                  autoComplete="email"
+                  maxLength={120}
+                />
+              </label>
               {SOCIALS.map(({ key, label, Icon, placeholder }) => (
                 <label className="upload-social-row" key={key}>
                   <span className="upload-social-icon" aria-hidden="true">
@@ -453,44 +461,10 @@ export default function ArtistUpload() {
                   />
                 </label>
               ))}
-              <label className="upload-social-row">
-                <span className="upload-social-icon" aria-hidden="true">
-                  <IconMail size={20} stroke={1.5} />
-                </span>
-                <input
-                  type="email"
-                  className="input-bare"
-                  aria-label="Email"
-                  aria-invalid={emailError}
-                  value={email}
-                  onChange={(e) => onEmailChange(e.target.value)}
-                  onBlur={() => setEmailError(emailLooksWrong())}
-                  placeholder="Email (optional)"
-                  autoComplete="email"
-                  maxLength={120}
-                />
-              </label>
-              <label className="upload-social-row">
-                <span className="upload-social-icon" aria-hidden="true">
-                  <IconPhone size={20} stroke={1.5} />
-                </span>
-                <input
-                  type="tel"
-                  className="input-bare"
-                  aria-label="Phone"
-                  value={phone}
-                  onChange={(e) => onPhoneChange(e.target.value)}
-                  placeholder="Phone (optional)"
-                  autoComplete="tel"
-                  maxLength={40}
-                />
-              </label>
             </div>
-            <span className="upload-hint">
-              {emailError
-                ? 'That email doesn’t look right. Check it or leave it blank.'
-                : 'Your email and phone are only shared with Hot Numbers, not shown on your press kit.'}
-            </span>
+            {emailError && (
+              <span className="upload-hint">That email doesn’t look right. Check it or leave it blank.</span>
+            )}
           </div>
 
           <div className="upload-section">
