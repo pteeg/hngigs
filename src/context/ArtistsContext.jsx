@@ -12,6 +12,7 @@ import {
 } from '../data/artists'
 import { auth, db } from '../lib/firebase'
 import { ensureStaffProfile } from '../lib/staff'
+import { logStaff, logStaffSessionOnce } from '../lib/staffLog'
 import {
   deleteArtistRecord,
   fromArtistDoc,
@@ -90,6 +91,7 @@ export function ArtistsProvider({ children }) {
     ensureStaffProfile(user)
       .then(() => {
         if (cancelled) return
+        logStaffSessionOnce(user.uid)
         unsubArtists = onSnapshot(
           collection(db, 'artists'),
           (snap) => {
@@ -185,8 +187,9 @@ export function ArtistsProvider({ children }) {
     next.assets = assetsFromArtist(next)
     setArtists((list) => list.map((artist) => (artist.id === id ? next : artist)))
     persist(next, current.uploadToken)
+    if (user) logStaff('upload_link_requested', { artistId: id, detail: current.name })
     return next
-  }, [artists, persist])
+  }, [artists, persist, user])
 
   const replaceArtist = useCallback((id, recipe) => {
     const current = artistsRef.current.find((artist) => artist.id === id)
@@ -274,6 +277,7 @@ export function ArtistsProvider({ children }) {
       next.assets = assetsFromArtist(next)
       setArtists((list) => list.map((artist) => (artist.id === id ? next : artist)))
       await persist(next)
+      if (user) logStaff('artist_edited', { artistId: id, detail: trimmed })
       return next
     }
 
@@ -288,8 +292,9 @@ export function ArtistsProvider({ children }) {
     })
     setArtists((list) => [...list, next])
     await persist(next)
+    if (user) logStaff('artist_created', { artistId: next.id, detail: trimmed })
     return next
-  }, [artists, persist])
+  }, [artists, persist, user])
 
   const submitAssets = useCallback((id) => {
     replaceArtist(id, (artist) => ({ ...artist, submittedAt: Date.now() }))
@@ -299,7 +304,10 @@ export function ArtistsProvider({ children }) {
     const current = artists.find((artist) => artist.id === id)
     pending.current.delete(id)
     setArtists((list) => list.filter((artist) => artist.id !== id))
-    if (current && user) deleteArtistRecord(current).catch(() => {})
+    if (current && user) {
+      deleteArtistRecord(current).catch(() => {})
+      logStaff('artist_deleted', { artistId: id, detail: current.name })
+    }
   }, [artists, user])
 
   const value = useMemo(

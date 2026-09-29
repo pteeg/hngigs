@@ -6,6 +6,7 @@ import {
   signOut,
 } from 'firebase/auth'
 import { auth } from '../lib/firebase'
+import { logStaff, markStaffSession } from '../lib/staffLog'
 
 const AuthContext = createContext(null)
 
@@ -39,7 +40,9 @@ export function AuthProvider({ children }) {
   async function signIn(email, password) {
     setError('')
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password)
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password)
+      markStaffSession(credential.user.uid)
+      logStaff('signed_in')
     } catch (err) {
       const message = messageFor(err)
       setError(message)
@@ -60,6 +63,7 @@ export function AuthProvider({ children }) {
 
   async function logOut() {
     setError('')
+    await logStaff('signed_out')
     await signOut(auth)
   }
 

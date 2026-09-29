@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
 import { useArtists } from '../context/ArtistsContext'
-import { IconFlask } from '@tabler/icons-react'
 import { IconArtists, IconSettings } from './icons'
 
 export default function Sidebar() {
@@ -24,10 +23,6 @@ export default function Sidebar() {
           <IconArtists />
           <span className="nav-item-label">Artists</span>
           <span className="nav-count">{artists.length}</span>
-        </NavLink>
-        <NavLink to="/pilot" className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
-          <IconFlask size={18} stroke={1.4} />
-          <span className="nav-item-label">Pilot</span>
         </NavLink>
       </nav>
 

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { logStaff } from '../lib/staffLog'
 
 const SettingsContext = createContext(null)
 const SETTINGS_KEY = 'hn-gigs-settings-v1'
@@ -26,10 +27,12 @@ export function SettingsProvider({ children }) {
     const next = email.trim().toLowerCase()
     if (!next) return
     setNotifyEmails((current) => (current.includes(next) ? current : [...current, next]))
+    logStaff('notify_email_added', { detail: next })
   }, [])
 
   const removeNotifyEmail = useCallback((email) => {
     setNotifyEmails((current) => current.filter((item) => item !== email))
+    logStaff('notify_email_removed', { detail: email })
   }, [])
 
   const value = useMemo(

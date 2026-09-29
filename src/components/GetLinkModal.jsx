@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { IconBrandInstagram, IconCopy, IconMail, IconPhone, IconX } from '@tabler/icons-react'
 import { socialHref, uploadUrl } from '../data/artists'
+import { logStaff } from '../lib/staffLog'
 
 export default function GetLinkModal({ artist, onClose }) {
   const [copied, setCopied] = useState(false)
@@ -12,6 +13,7 @@ export default function GetLinkModal({ artist, onClose }) {
 
   async function copyLink() {
     if (!url) return
+    logStaff('upload_link_copied', { artistId: artist.id, detail: artist.name })
     try {
       await navigator.clipboard.writeText(url)
     } catch {

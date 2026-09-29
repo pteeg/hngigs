@@ -1,9 +1,92 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
-import { IconInfoCircle, IconLock, IconPlus, IconX } from '@tabler/icons-react'
+import DeveloperTools from '../components/DeveloperTools'
+import { IconArrowRight, IconInfoCircle, IconLock, IconPlus, IconX } from '@tabler/icons-react'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// A soft gate to keep the tools out of the way, not access control: the data is protected by staff-only rules.
+const DEV_PASSCODE = 'toby'
+const DEV_UNLOCK_KEY = 'hn-dev-tools-unlocked'
+
+function readDevUnlocked() {
+  try {
+    return sessionStorage.getItem(DEV_UNLOCK_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function DeveloperToolsSection() {
+  const [unlocked, setUnlocked] = useState(readDevUnlocked)
+  const [passcode, setPasscode] = useState('')
+  const [wrong, setWrong] = useState(false)
+
+  function onUnlock(event) {
+    event.preventDefault()
+    if (passcode.trim().toLowerCase() !== DEV_PASSCODE) {
+      setWrong(true)
+      return
+    }
+    try {
+      sessionStorage.setItem(DEV_UNLOCK_KEY, '1')
+    } catch {
+      // Unlock still works for this page view.
+    }
+    setUnlocked(true)
+  }
+
+  function onLock() {
+    try {
+      sessionStorage.removeItem(DEV_UNLOCK_KEY)
+    } catch {
+      // Nothing stored to clear.
+    }
+    setPasscode('')
+    setUnlocked(false)
+  }
+
+  return (
+    <>
+      <section className="settings-section">
+        <div className="sec-label">Developer Tools</div>
+        <div className="card">
+          {unlocked ? (
+            <div className="row">
+              <div className="row-meta">Pilot stats and staff activity are shown below.</div>
+              <button type="button" className="btn btn-outline" onClick={onLock}>
+                <IconLock size={16} stroke={1.5} />
+                Lock
+              </button>
+            </div>
+          ) : (
+            <form className="row" onSubmit={onUnlock}>
+              <div className="settings-inline settings-inline-full">
+                <input
+                  type="password"
+                  className={'lock-input' + (wrong ? ' is-wrong' : '')}
+                  value={passcode}
+                  onChange={(event) => {
+                    setPasscode(event.target.value)
+                    setWrong(false)
+                  }}
+                  placeholder="Passcode"
+                  aria-label="Developer Tools passcode"
+                  autoComplete="off"
+                />
+                <button type="submit" className="btn btn-outline" disabled={!passcode}>
+                  Unlock
+                  <IconArrowRight size={16} stroke={1.8} />
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+      {unlocked && <DeveloperTools />}
+    </>
+  )
+}
 
 export default function Settings() {
   const { user, logOut } = useAuth()
@@ -111,6 +194,8 @@ export default function Settings() {
             </form>
           </div>
         </section>
+
+        <DeveloperToolsSection />
       </div>
     </>
   )

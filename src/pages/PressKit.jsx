@@ -4,6 +4,7 @@ import { useArtists } from '../context/ArtistsContext'
 import ArtistFormModal from '../components/ArtistFormModal'
 import GetLinkModal from '../components/GetLinkModal'
 import PressKitView from '../components/PressKitView'
+import { logStaff } from '../lib/staffLog'
 import { referrerHost, track } from '../lib/track'
 import { IconArrowLeft, IconEdit, IconLink } from '@tabler/icons-react'
 
@@ -65,7 +66,10 @@ export default function PressKit({ publicView = false }) {
         artist={artist}
         publicView={publicView}
         heroActions={staffActions}
-        onDownload={publicView ? undefined : (kind) => track('staff_asset_downloaded', artist.id, { kind })}
+        onDownload={publicView ? undefined : (kind) => {
+          track('staff_asset_downloaded', artist.id, { kind })
+          logStaff('assets_downloaded', { artistId: artist.id, detail: kind === 'photos' ? 'Photos' : 'Full press kit' })
+        }}
       />
 
       {editOpen && (

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useArtists } from '../context/ArtistsContext'
 import MediaPreviewModal from './MediaPreviewModal'
 import { uploadUrl } from '../data/artists'
+import { logStaff } from '../lib/staffLog'
 import { IconCopy, IconEye, IconPhoto, IconTrash, IconUpload, IconX } from '@tabler/icons-react'
 
 const EMPTY_CONTACT = {
@@ -101,6 +102,7 @@ export default function ArtistFormModal({ artist, onClose, onDeleted }) {
   }
 
   async function copyLink() {
+    logStaff('upload_link_copied', { artistId: created.id, detail: created.name })
     try {
       await navigator.clipboard.writeText(uploadUrl(created.uploadToken))
     } catch {

@@ -640,6 +640,10 @@ input.input-bare:focus {
   overflow-wrap: anywhere;
 }
 
+.pilot-nowrap {
+  white-space: nowrap;
+}
+
 .pilot-no {
   color: var(--muted);
 }

@@ -75,11 +75,26 @@ rules_version = '2';
 //   - createdAt: timestamp, must equal request.time
 // Access: anyone may create. Only staff may read. Nobody may update or delete.
 //
+// Collection: staffActivity
+// Document ID: auto id
+// Fields:
+//   - uid: string, must equal request.auth.uid
+//   - email: string, must equal the auth token email
+//   - action: string enum (signed_in, session_started, signed_out, artist_created,
+//     artist_edited, artist_deleted, upload_link_requested, upload_link_copied,
+//     assets_downloaded, notify_email_added, notify_email_removed)
+//   - artistId: "" or an artist slug
+//   - detail: string <= 200 (artist name, download kind, or notify email)
+//   - ts: timestamp, must equal request.time
+// Access: staff may create entries for themselves and read all. Nobody may update or delete.
+//
 // Queries the app runs:
 //   - staff: list artists (no where/orderBy) via onSnapshot, because the CRM is a shared live list
 //   - staff: list tokens (no where/orderBy) via onSnapshot, to fold artist-link edits into the CRM
 //   - public: get publicKits/{id} and get tokens/{token} only
 //   - anyone: create events and waitlist documents (addDoc, no reads)
+//   - staff: create staffActivity entries (addDoc) and list events, waitlist and
+//     staffActivity (no where/orderBy) via onSnapshot in Developer Tools
 //
 // ===============================================================
 
@@ -377,6 +392,24 @@ service cloud.firestore {
         && kitExists(data.artistId);
     }
 
+    function isValidStaffActivity(data) {
+      return data.keys().hasOnly(['uid', 'email', 'action', 'artistId', 'detail', 'ts'])
+        && data.uid == request.auth.uid
+        && data.email is string
+        && data.email == request.auth.token.email
+        && data.action in [
+          'signed_in', 'session_started', 'signed_out', 'artist_created',
+          'artist_edited', 'artist_deleted', 'upload_link_requested',
+          'upload_link_copied', 'assets_downloaded', 'notify_email_added',
+          'notify_email_removed'
+        ]
+        && data.artistId is string
+        && (data.artistId.size() == 0 || data.artistId.matches('^[a-z0-9-]{1,80}$'))
+        && data.detail is string
+        && data.detail.size() <= 200
+        && data.ts == request.time;
+    }
+
     function anonymousTokenEdit() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt'
@@ -451,6 +484,12 @@ service cloud.firestore {
     match /waitlist/{entryId} {
       allow get, list: if isStaff();
       allow create: if isValidWaitlistEntry(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /staffActivity/{entryId} {
+      allow get, list: if isStaff();
+      allow create: if isStaff() && isValidStaffActivity(request.resource.data);
       allow update, delete: if false;
     }
   }
