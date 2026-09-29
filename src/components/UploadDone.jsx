@@ -189,7 +189,6 @@ export default function UploadDone({ artist, token, email, onEdit }) {
             {interested ? <IconCheck size={18} stroke={2} /> : <IconHandStop size={18} stroke={1.6} />}
             {interested ? 'You’re on the list' : 'I’m interested'}
           </button>
-          <span className="done-interest-note only-wide">We’ll let you know when it’s ready.</span>
         </div>
 
         <div className="done-steps">

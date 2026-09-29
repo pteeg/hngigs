@@ -1699,27 +1699,32 @@ textarea.upload-bio {
 
 .done-interest {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 18px;
+  justify-content: center;
+  padding: 12px 0;
 }
 
 .btn.done-interest-btn {
-  height: 46px;
-  padding: 0 22px;
+  height: 54px;
+  padding: 0 32px 0 28px;
+  gap: 10px;
+  background: var(--ink);
+  color: var(--card);
+  font-size: var(--fs-base);
   font-weight: 700;
+  box-shadow: 0 10px 24px -10px rgba(28, 26, 24, 0.55);
+}
+
+.btn.done-interest-btn:hover {
+  background: var(--ink-soft);
+  color: var(--card);
 }
 
 .btn.done-interest-btn.is-done,
 .btn.done-interest-btn.is-done:hover {
   background: var(--ok-tint);
   color: var(--ok-ink);
+  box-shadow: none;
   cursor: default;
-}
-
-.done-interest-note {
-  font-size: var(--fs-sm);
-  color: var(--muted);
 }
 
 .done-steps-label {
@@ -1914,12 +1919,6 @@ textarea.upload-bio {
 
   .done-kit-tile {
     height: 64px;
-  }
-
-  .btn.done-interest-btn {
-    width: 100%;
-    justify-content: center;
-    height: 50px;
   }
 
   .done-steps li {
