@@ -10,7 +10,8 @@ rules_version = '2';
 //   - role: string (required, only "staff", immutable) - shared venue access, not a hierarchy
 //   - createdAt: timestamp (required, immutable)
 // Access: a person can read only their own staff document. All staff share the CRM.
-// Clients cannot create or edit these documents. Add them in the Firebase console.
+// Clients cannot create or edit these documents. Settings adds and removes addresses
+// through addStaffEmail and removeStaffEmail, which write with the Admin SDK.
 //
 // Collection: meta
 // Document ID: bootstrap
@@ -23,7 +24,8 @@ rules_version = '2';
 // Document ID: venue
 // Fields:
 //   - invitedEmails: list of email strings (required, max 30, each max 120)
-// Access: staff only. This list is how a colleague can create their own login.
+// Access: staff may read this document. Clients cannot write it.
+// addStaffEmail and removeStaffEmail keep it in step with Auth users and staff documents.
 //
 // Collection: artists
 // Document ID: slug, ^[a-z0-9-]{1,80}$
@@ -84,9 +86,10 @@ rules_version = '2';
 //   - email: string, must equal the auth token email
 //   - action: string enum (signed_in, session_started, signed_out, artist_created,
 //     artist_edited, artist_deleted, upload_link_requested, upload_link_copied,
-//     assets_downloaded, notify_email_added, notify_email_removed)
+//     assets_downloaded, notify_email_added, notify_email_removed,
+//     staff_email_added, staff_email_removed)
 //   - artistId: "" or an artist slug
-//   - detail: string <= 200 (artist name, download kind, or notify email)
+//   - detail: string <= 200 (artist name, download kind, or an email address)
 //   - ts: timestamp, must equal request.time
 // Access: staff may create entries for themselves and read all. Nobody may update or delete.
 //
@@ -95,6 +98,7 @@ rules_version = '2';
 //   - staff: list tokens (no where/orderBy) via onSnapshot, to fold artist-link edits into the CRM
 //   - public: get publicKits/{id} and get tokens/{token} only
 //   - anyone: create events and waitlist documents (addDoc, no reads)
+//   - staff: get settings/venue via onSnapshot, for the staff email list
 //   - staff: create staffActivity entries (addDoc) and list events, waitlist and
 //     staffActivity (no where/orderBy) via onSnapshot in Developer Tools
 //
@@ -321,42 +325,6 @@ service cloud.firestore {
         && (!('actType' in data) || data.actType in ['live', 'dj']);
     }
 
-    function isValidVenue(data) {
-      return data.keys().hasOnly(['invitedEmails'])
-        && data.invitedEmails is list
-        && data.invitedEmails.size() <= 30
-        && (data.invitedEmails.size() < 1 || isValidEmail(data.invitedEmails[0]))
-        && (data.invitedEmails.size() < 2 || isValidEmail(data.invitedEmails[1]))
-        && (data.invitedEmails.size() < 3 || isValidEmail(data.invitedEmails[2]))
-        && (data.invitedEmails.size() < 4 || isValidEmail(data.invitedEmails[3]))
-        && (data.invitedEmails.size() < 5 || isValidEmail(data.invitedEmails[4]))
-        && (data.invitedEmails.size() < 6 || isValidEmail(data.invitedEmails[5]))
-        && (data.invitedEmails.size() < 7 || isValidEmail(data.invitedEmails[6]))
-        && (data.invitedEmails.size() < 8 || isValidEmail(data.invitedEmails[7]))
-        && (data.invitedEmails.size() < 9 || isValidEmail(data.invitedEmails[8]))
-        && (data.invitedEmails.size() < 10 || isValidEmail(data.invitedEmails[9]))
-        && (data.invitedEmails.size() < 11 || isValidEmail(data.invitedEmails[10]))
-        && (data.invitedEmails.size() < 12 || isValidEmail(data.invitedEmails[11]))
-        && (data.invitedEmails.size() < 13 || isValidEmail(data.invitedEmails[12]))
-        && (data.invitedEmails.size() < 14 || isValidEmail(data.invitedEmails[13]))
-        && (data.invitedEmails.size() < 15 || isValidEmail(data.invitedEmails[14]))
-        && (data.invitedEmails.size() < 16 || isValidEmail(data.invitedEmails[15]))
-        && (data.invitedEmails.size() < 17 || isValidEmail(data.invitedEmails[16]))
-        && (data.invitedEmails.size() < 18 || isValidEmail(data.invitedEmails[17]))
-        && (data.invitedEmails.size() < 19 || isValidEmail(data.invitedEmails[18]))
-        && (data.invitedEmails.size() < 20 || isValidEmail(data.invitedEmails[19]))
-        && (data.invitedEmails.size() < 21 || isValidEmail(data.invitedEmails[20]))
-        && (data.invitedEmails.size() < 22 || isValidEmail(data.invitedEmails[21]))
-        && (data.invitedEmails.size() < 23 || isValidEmail(data.invitedEmails[22]))
-        && (data.invitedEmails.size() < 24 || isValidEmail(data.invitedEmails[23]))
-        && (data.invitedEmails.size() < 25 || isValidEmail(data.invitedEmails[24]))
-        && (data.invitedEmails.size() < 26 || isValidEmail(data.invitedEmails[25]))
-        && (data.invitedEmails.size() < 27 || isValidEmail(data.invitedEmails[26]))
-        && (data.invitedEmails.size() < 28 || isValidEmail(data.invitedEmails[27]))
-        && (data.invitedEmails.size() < 29 || isValidEmail(data.invitedEmails[28]))
-        && (data.invitedEmails.size() < 30 || isValidEmail(data.invitedEmails[29]));
-    }
-
     function kitExists(artistId) {
       return artistId is string
         && artistId.matches('^[a-z0-9-]{1,80}$')
@@ -415,7 +383,7 @@ service cloud.firestore {
           'signed_in', 'session_started', 'signed_out', 'artist_created',
           'artist_edited', 'artist_deleted', 'upload_link_requested',
           'upload_link_copied', 'assets_downloaded', 'notify_email_added',
-          'notify_email_removed'
+          'notify_email_removed', 'staff_email_added', 'staff_email_removed'
         ]
         && data.artistId is string
         && (data.artistId.size() == 0 || data.artistId.matches('^[a-z0-9-]{1,80}$'))
@@ -446,9 +414,7 @@ service cloud.firestore {
 
     match /settings/{docId} {
       allow get: if isStaff() && docId == 'venue';
-      allow list: if false;
-      allow create, update: if isStaff() && docId == 'venue' && isValidVenue(request.resource.data);
-      allow delete: if false;
+      allow list, create, update, delete: if false;
     }
 
     match /artists/{artistId} {

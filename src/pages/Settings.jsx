@@ -90,12 +90,17 @@ function DeveloperToolsSection() {
 
 export default function Settings() {
   const { user, logOut } = useAuth()
-  const { notifyEmails, addNotifyEmail, removeNotifyEmail } = useSettings()
-  const [newEmail, setNewEmail] = useState('')
+  const { staffEmails, addStaffEmail, removeStaffEmail } = useSettings()
+  const [staffEmail, setStaffEmail] = useState('')
+  const [staffNotice, setStaffNotice] = useState('')
+  const [staffError, setStaffError] = useState('')
+  const [staffBusy, setStaffBusy] = useState(false)
   const [notifyInfoOpen, setNotifyInfoOpen] = useState(false)
   const notifyInfoRef = useRef(null)
   const notifyInfoId = useId()
-  const emailValid = EMAIL_PATTERN.test(newEmail.trim())
+  const staffEmailValid = EMAIL_PATTERN.test(staffEmail.trim())
+  const ownEmail = user?.email?.trim().toLowerCase() || ''
+  const staffRows = [...new Set([ownEmail, ...staffEmails.map((email) => email.toLowerCase())].filter(Boolean))]
 
   useEffect(() => {
     if (!notifyInfoOpen) return undefined
@@ -113,11 +118,39 @@ export default function Settings() {
     }
   }, [notifyInfoOpen])
 
-  function onAddEmail(event) {
+  async function onAddStaff(event) {
     event.preventDefault()
-    if (!emailValid) return
-    addNotifyEmail(newEmail)
-    setNewEmail('')
+    if (!staffEmailValid || staffBusy) return
+    setStaffError('')
+    setStaffNotice('')
+    setStaffBusy(true)
+    try {
+      const result = await addStaffEmail(staffEmail)
+      setStaffEmail('')
+      if (result.created) setStaffNotice(`${result.email} can sign in with the password hotnumbers.`)
+      else if (result.added) setStaffNotice(`${result.email} can sign in with their existing password.`)
+      else setStaffNotice(`${result.email} is already on the staff list.`)
+    } catch (error) {
+      setStaffError(error.message)
+    } finally {
+      setStaffBusy(false)
+    }
+  }
+
+  async function onRemoveStaff(email) {
+    if (staffBusy) return
+    if (!window.confirm(`Remove ${email} from the staff list? They won’t be able to sign in.`)) return
+    setStaffError('')
+    setStaffNotice('')
+    setStaffBusy(true)
+    try {
+      await removeStaffEmail(email)
+      setStaffNotice(`Removed ${email}.`)
+    } catch (error) {
+      setStaffError(error.message)
+    } finally {
+      setStaffBusy(false)
+    }
   }
 
   return (
@@ -146,6 +179,58 @@ export default function Settings() {
         </section>
 
         <section className="settings-section">
+          <div className="sec-label">Staff</div>
+          <div className="card">
+            <div className="row">
+              <div className="row-meta">People on this list can sign in. New addresses use the password hotnumbers.</div>
+            </div>
+            {staffRows.map((email) => (
+              <div className="row" key={email}>
+                <div>
+                  <div className="row-name settings-email">{email}</div>
+                  {email === ownEmail && <div className="row-meta">You</div>}
+                </div>
+                {email !== ownEmail && (
+                  <button
+                    type="button"
+                    className="upload-remove"
+                    onClick={() => onRemoveStaff(email)}
+                    disabled={staffBusy}
+                    aria-label={`Remove ${email}`}
+                  >
+                    <IconX size={15} stroke={1.6} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {(staffError || staffNotice) && (
+              <div className="row">
+                <div className={staffError ? 'settings-error' : 'settings-notice'}>{staffError || staffNotice}</div>
+              </div>
+            )}
+            <form className="row" onSubmit={onAddStaff}>
+              <div className="settings-inline settings-inline-full">
+                <input
+                  type="email"
+                  value={staffEmail}
+                  onChange={(event) => {
+                    setStaffEmail(event.target.value)
+                    setStaffError('')
+                  }}
+                  placeholder="name@hotnumberscoffee.co.uk"
+                  aria-label="Add a staff email"
+                  disabled={staffBusy}
+                />
+                <button type="submit" className="btn btn-outline" disabled={!staffEmailValid || staffBusy}>
+                  <IconPlus size={16} stroke={1.8} />
+                  Add
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section className="settings-section">
           <div className="sec-heading-wrap" ref={notifyInfoRef}>
             <div className="sec-heading">
               <div className="sec-label">Notifications</div>
@@ -163,35 +248,9 @@ export default function Settings() {
             </div>
             {notifyInfoOpen && (
               <div className="info-pop" id={notifyInfoId} role="note">
-                <div className="row-name">Artist update emails</div>
-                <div className="row-meta">Coming soon. These addresses will get an email when an artist saves their assets through their link.</div>
+                <div className="row-meta">Coming soon. Choose email addresses to get an email when an artist saves their assets through their link.</div>
               </div>
             )}
-          </div>
-          <div className="card">
-            {notifyEmails.map((email) => (
-              <div className="row" key={email}>
-                <div className="row-name settings-email">{email}</div>
-                <button type="button" className="upload-remove" onClick={() => removeNotifyEmail(email)} aria-label={`Remove ${email}`}>
-                  <IconX size={15} stroke={1.6} />
-                </button>
-              </div>
-            ))}
-            <form className="row" onSubmit={onAddEmail}>
-              <div className="settings-inline settings-inline-full">
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(event) => setNewEmail(event.target.value)}
-                  placeholder="name@hotnumbers.co.uk"
-                  aria-label="Add an email address"
-                />
-                <button type="submit" className="btn btn-outline" disabled={!emailValid}>
-                  <IconPlus size={16} stroke={1.8} />
-                  Add
-                </button>
-              </div>
-            </form>
           </div>
         </section>
 

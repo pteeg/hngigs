@@ -1,5 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { db } from '../lib/firebase'
+import { addStaffEmail as addStaffEmailRequest, removeStaffEmail as removeStaffEmailRequest } from '../lib/staff'
 import { logStaff } from '../lib/staffLog'
+import { useAuth } from './AuthContext'
 
 const SettingsContext = createContext(null)
 const SETTINGS_KEY = 'hn-gigs-settings-v1'
@@ -17,11 +21,28 @@ function readNotifyEmails() {
 }
 
 export function SettingsProvider({ children }) {
+  const { user } = useAuth()
   const [notifyEmails, setNotifyEmails] = useState(readNotifyEmails)
+  const [staffEmails, setStaffEmails] = useState([])
 
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ notifyEmails }))
   }, [notifyEmails])
+
+  useEffect(() => {
+    if (!user) {
+      setStaffEmails([])
+      return undefined
+    }
+    return onSnapshot(
+      doc(db, 'settings', 'venue'),
+      (snap) => {
+        const emails = snap.exists() ? snap.data()?.invitedEmails : []
+        setStaffEmails(Array.isArray(emails) ? emails.filter((item) => typeof item === 'string') : [])
+      },
+      () => setStaffEmails([]),
+    )
+  }, [user])
 
   const addNotifyEmail = useCallback((email) => {
     const next = email.trim().toLowerCase()
@@ -35,13 +56,27 @@ export function SettingsProvider({ children }) {
     logStaff('notify_email_removed', { detail: email })
   }, [])
 
+  const addStaffEmail = useCallback(async (email) => {
+    const result = await addStaffEmailRequest(email)
+    logStaff('staff_email_added', { detail: result.email })
+    return result
+  }, [])
+
+  const removeStaffEmail = useCallback(async (email) => {
+    await removeStaffEmailRequest(email)
+    logStaff('staff_email_removed', { detail: email.trim().toLowerCase() })
+  }, [])
+
   const value = useMemo(
     () => ({
       notifyEmails,
       addNotifyEmail,
       removeNotifyEmail,
+      staffEmails,
+      addStaffEmail,
+      removeStaffEmail,
     }),
-    [notifyEmails, addNotifyEmail, removeNotifyEmail],
+    [notifyEmails, addNotifyEmail, removeNotifyEmail, staffEmails, addStaffEmail, removeStaffEmail],
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

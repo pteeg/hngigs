@@ -19,6 +19,8 @@ const ACTION_LABELS = {
   assets_downloaded: 'Downloaded assets',
   notify_email_added: 'Added notify email',
   notify_email_removed: 'Removed notify email',
+  staff_email_added: 'Added staff email',
+  staff_email_removed: 'Removed staff email',
 }
 
 const LOG_LIMIT = 200

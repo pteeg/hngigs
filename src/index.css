@@ -412,6 +412,19 @@ input::placeholder, textarea::placeholder { color: var(--label); }
   font-weight: 500;
 }
 
+.settings-error,
+.settings-notice {
+  font-size: var(--fs-sm);
+}
+
+.settings-error {
+  color: var(--red-ink);
+}
+
+.settings-notice {
+  color: var(--ok-ink);
+}
+
 @media (max-width: 720px) {
   .settings-form-row {
     flex-direction: column;
