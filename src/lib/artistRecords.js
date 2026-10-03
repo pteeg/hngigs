@@ -6,6 +6,9 @@ const MAX_MEDIA = 6
 const MAX_LINKS = 8
 const MAX_GIGS = 8
 const MAX_URL_BUDGET = 700000
+const CONSENT_VERSION_PATTERN = /^v\d{1,15}$/
+
+export const CONSENT_VERSION = 'v1'
 
 function text(value, max) {
   return String(value ?? '').slice(0, max)
@@ -52,6 +55,22 @@ function trimGigs(gigHistory) {
     .slice(0, MAX_GIGS)
 }
 
+function trimConsent(consent) {
+  if (!consent || typeof consent !== 'object') return null
+  const agreedAt = millis(consent.agreedAt)
+  const version = text(consent.version, 16)
+  if (agreedAt == null || !CONSENT_VERSION_PATTERN.test(version)) return null
+  return { agreedAt, version }
+}
+
+function consentForWrite(consent) {
+  if (!consent) return null
+  return {
+    agreedAt: Timestamp.fromMillis(consent.agreedAt),
+    version: consent.version,
+  }
+}
+
 function publicContact(contact) {
   return {
     instagram: text(contact?.instagram, 200),
@@ -80,6 +99,7 @@ export function prepareArtist(artist) {
     uploadToken: text(artist.uploadToken, 64),
     linkGeneratedAt: millis(artist.linkGeneratedAt),
     submittedAt: millis(artist.submittedAt),
+    consent: trimConsent(artist.consent),
     actType: actTypeOf(artist),
   }
   next.assets = assetsFromArtist(next)
@@ -117,6 +137,7 @@ export function toArtistDoc(artist) {
     linkGeneratedAt: asTimestamp(ready.linkGeneratedAt),
     submittedAt: asTimestamp(ready.submittedAt),
     actType: ready.actType,
+    ...consentWrite(ready.consent),
   }
 }
 
@@ -124,14 +145,19 @@ export function toPublicDoc(artist) {
   return publicFields(artist)
 }
 
-// Tokens also carry email and phone so artists can edit them from their link.
+// Tokens also carry email, phone and consent so artists can edit them from their link.
 // They never reach publicKits.
 export function toTokenDoc(artist) {
   const ready = prepareArtist(artist)
   const contact = publicContact(ready.contact)
   if (artist.contact?.email != null) contact.email = ready.contact.email
   if (artist.contact?.phone != null) contact.phone = ready.contact.phone
-  return { artistId: artist.id, ...publicFields(ready), contact }
+  return { artistId: artist.id, ...publicFields(ready), contact, ...consentWrite(ready.consent) }
+}
+
+function consentWrite(consent) {
+  const stored = consentForWrite(consent)
+  return stored ? { consent: stored } : {}
 }
 
 function fromTimestamps(data) {
@@ -153,6 +179,7 @@ export function fromArtistDoc(id, data) {
     youtube: data.contact?.youtube || '',
   }
   artist.actType = actTypeOf(artist)
+  artist.consent = trimConsent(data.consent)
   return artist
 }
 
@@ -162,6 +189,7 @@ export function fromPublicDoc(id, data) {
     contact: { email: '', phone: '', ...publicContact(data.contact) },
     uploadToken: '',
   })
+  artist.consent = null
   return artist
 }
 
@@ -171,6 +199,7 @@ export function fromTokenDoc(token, data) {
   artist.uploadToken = token
   artist.contact.email = typeof data.contact?.email === 'string' ? data.contact.email : null
   artist.contact.phone = typeof data.contact?.phone === 'string' ? data.contact.phone : null
+  artist.consent = trimConsent(data.consent)
   return artist
 }
 
@@ -188,6 +217,7 @@ export function publicSignature(artist) {
     instagram: ready.contact.instagram,
     spotify: ready.contact.spotify,
     youtube: ready.contact.youtube,
+    consent: ready.consent,
   })
 }
 
@@ -208,6 +238,7 @@ export function overlayToken(artist, tokenArtist) {
       spotify: tokenArtist.contact?.spotify || '',
       youtube: tokenArtist.contact?.youtube || '',
     },
+    consent: tokenArtist.consent ?? artist.consent ?? null,
   })
 }
 

@@ -14,8 +14,9 @@ const EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const MAX_STAFF_EMAILS = 30
 const STAFF_PASSWORD = 'hotnumbers'
 
-// Same fields as toPublicDoc in src/lib/artistRecords.js. The token document has already
-// passed isValidToken in firestore.rules, so only the key set is narrowed here.
+// Same fields as toPublicDoc in src/lib/artistRecords.js. Consent stays on the token
+// and the artist document. The token document has already passed isValidToken in
+// firestore.rules, so only the key set is narrowed here.
 export function publicKitFrom(token) {
   return {
     name: token.name,

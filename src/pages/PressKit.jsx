@@ -47,7 +47,7 @@ export default function PressKit({ publicView = false }) {
   }
 
   const staffActions = !publicView && (
-    <div className="pk-hero-staff">
+    <>
       <button type="button" className="pk-hero-btn" onClick={() => setEditOpen(true)}>
         <IconEdit size={15} stroke={1.5} />
         Edit
@@ -56,7 +56,7 @@ export default function PressKit({ publicView = false }) {
         <IconLink size={15} stroke={1.5} />
         Request assets
       </button>
-    </div>
+    </>
   )
 
   return (
@@ -65,7 +65,7 @@ export default function PressKit({ publicView = false }) {
       <PressKitView
         artist={artist}
         publicView={publicView}
-        heroActions={staffActions}
+        staffActions={staffActions}
         onDownload={publicView ? undefined : (kind) => {
           track('staff_asset_downloaded', artist.id, { kind })
           logStaff('assets_downloaded', { artistId: artist.id, detail: kind === 'photos' ? 'Photos' : 'Full press kit' })

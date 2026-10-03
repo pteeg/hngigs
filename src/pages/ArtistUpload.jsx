@@ -11,12 +11,15 @@ import {
   IconBrandInstagram,
   IconBrandSpotify,
   IconBrandYoutube,
+  IconCheck,
   IconEye,
   IconMail,
   IconPhoto,
   IconUpload,
   IconX,
 } from '@tabler/icons-react'
+
+const CONSENT_COPY = 'By uploading, I confirm I own or have the right to share this content, and I grant Hot Numbers and its promoters permission to use it to promote my performances, including on social media.'
 
 const SOCIALS = [
   { key: 'instagram', label: 'Instagram', Icon: IconBrandInstagram, placeholder: '@handle or URL' },
@@ -50,6 +53,8 @@ export default function ArtistUpload() {
   })
   const [email, setEmail] = useState(artist?.contact.email ?? '')
   const [emailError, setEmailError] = useState(false)
+  const [agreed, setAgreed] = useState(Boolean(artist?.consent))
+  const [consentError, setConsentError] = useState(false)
   const [uploads, setUploads] = useState([])
   const [uploadNotice, setUploadNotice] = useState('')
   const uploading = uploads.some((upload) => !upload.failed)
@@ -65,6 +70,8 @@ export default function ArtistUpload() {
       youtube: artist.contact.youtube ?? '',
     })
     setEmail(artist.contact.email ?? '')
+    setAgreed(Boolean(artist.consent))
+    setConsentError(false)
   }
 
   const flushRef = useRef(() => {})
@@ -172,11 +179,21 @@ export default function ArtistUpload() {
     return Boolean(clean) && !isValidWaitlistEmail(clean)
   }
 
+  function onConsentChange(event) {
+    const next = event.target.checked
+    setAgreed(next)
+    if (next) setConsentError(false)
+    setSavedFor(null)
+  }
+
   function save() {
-    if (emailLooksWrong()) {
-      setEmailError(true)
+    const emailBad = emailLooksWrong()
+    if (emailBad) setEmailError(true)
+    if (!agreed) {
+      setConsentError(true)
       return
     }
+    if (emailBad) return
     flushRef.current()
     submitAssets(artist.id)
     track('assets_saved', artist.id, {
@@ -184,6 +201,7 @@ export default function ArtistUpload() {
       bioLength: bio.length,
       seconds: Math.min(Math.round((Date.now() - openedAt) / 1000), 2592000),
     })
+    track('consent_given', artist.id)
     track('preview_shown', artist.id)
     setSavedFor(artist.id)
     window.scrollTo(0, 0)
@@ -409,7 +427,36 @@ export default function ArtistUpload() {
             {uploadNotice && <p className="upload-hint upload-notice">{uploadNotice}</p>}
           </div>
 
-          <button type="button" className="btn btn-primary btn-submit" onClick={save} disabled={uploading}>
+          <div className="upload-section consent-section">
+            <div className="field-label">Permission to use your content</div>
+            <label className={'consent' + (agreed ? ' is-on' : '') + (consentError ? ' is-error' : '')}>
+              <input
+                type="checkbox"
+                className="sr-only consent-input"
+                checked={agreed}
+                onChange={onConsentChange}
+                aria-invalid={consentError || undefined}
+                aria-describedby={consentError ? 'consent-error' : undefined}
+              />
+              <span className="consent-box" aria-hidden="true">
+                {agreed && <IconCheck size={14} stroke={3} />}
+              </span>
+              <span className="consent-copy">{CONSENT_COPY}</span>
+            </label>
+            {consentError && (
+              <div className="consent-error" id="consent-error" role="alert">
+                Tick the box to confirm before sending.
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className={'btn btn-primary btn-submit' + (agreed ? '' : ' is-inactive')}
+            onClick={save}
+            disabled={uploading}
+            aria-disabled={!agreed || uploading}
+          >
             {uploading ? 'Uploading…' : 'Save'}
           </button>
         </section>

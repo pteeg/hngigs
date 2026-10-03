@@ -40,11 +40,13 @@ rules_version = '2';
 //   - gigHistory: list <= 8 of {date, name}
 //   - uploadToken: string 8-64
 //   - linkGeneratedAt, submittedAt: timestamp or null
-// Access: staff only. Contact email and phone are private.
+//   - consent: optional map {agreedAt: timestamp, version: "v1", "v2", …}
+//     Recorded when an artist ticks the permission box and saves. Absent until then.
+// Access: staff only. Contact email, phone, and consent are private.
 //
 // Collection: publicKits
 // Document ID: same slug as artists
-// Public projection of an artist with no email, phone, or upload token.
+// Public projection of an artist with no email, phone, upload token, or consent.
 // Access: anyone may get a kit by id. Nobody may list them. Only staff may write.
 // The syncPublicKit Cloud Function (functions/index.js) also writes kits from tokens
 // through the Admin SDK, which bypasses these rules.
@@ -52,7 +54,9 @@ rules_version = '2';
 // Collection: tokens
 // Document ID: the unguessable upload token
 // Same public fields as a kit, plus artistId. contact may also hold the artist's
-// email and phone (optional keys) so they can edit them; these never reach publicKits.
+// email and phone (optional keys), and consent may hold {agreedAt, version}, so
+// they can edit details and grant permission from their link. Email, phone and
+// consent never reach publicKits.
 // Access: anyone who knows the token may get and update the editable fields.
 // Only staff may list tokens or create them.
 //
@@ -61,7 +65,7 @@ rules_version = '2';
 // Fields:
 //   - type: string enum (upload_link_opened, returned_visit, media_added, bio_edited,
 //     links_added, assets_saved, preview_shown, gift_link_copied, private_link_copied,
-//     waitlist_answered, public_kit_viewed, staff_asset_downloaded)
+//     waitlist_answered, public_kit_viewed, staff_asset_downloaded, consent_given)
 //   - artistId: slug of an artist that has a publicKits document
 //   - sessionId: string 8-64, random per browser tab session
 //   - meta: map, only photos, videos, media, links, bioLength, seconds (ints),
@@ -238,6 +242,20 @@ service cloud.firestore {
       return value == null || value is timestamp;
     }
 
+    function isValidConsent(consent) {
+      return consent is map
+        && consent.keys().hasOnly(['agreedAt', 'version'])
+        && consent.agreedAt is timestamp
+        && consent.version is string
+        && consent.version.size() >= 2
+        && consent.version.size() <= 16
+        && consent.version.matches('^v[0-9]+$');
+    }
+
+    function consentOk(data) {
+      return !('consent' in data) || isValidConsent(data.consent);
+    }
+
     function isValidPublicContact(contact) {
       return contact is map
         && contact.keys().hasOnly(['instagram', 'spotify', 'youtube'])
@@ -294,19 +312,20 @@ service cloud.firestore {
     function isValidToken(data) {
       return data.keys().hasOnly([
           'artistId', 'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
-          'media', 'links', 'gigHistory', 'linkGeneratedAt', 'submittedAt'
+          'media', 'links', 'gigHistory', 'linkGeneratedAt', 'submittedAt', 'consent'
         ])
         && data.artistId is string
         && data.artistId.matches('^[a-z0-9-]{1,80}$')
         && hasPublicShape(data)
-        && isValidTokenContact(data.contact);
+        && isValidTokenContact(data.contact)
+        && consentOk(data);
     }
 
     function isValidArtist(data) {
       return data.keys().hasOnly([
           'name', 'initials', 'tagline', 'bio', 'gigs', 'assets', 'contact',
           'media', 'links', 'gigHistory', 'uploadToken', 'linkGeneratedAt', 'submittedAt',
-          'actType'
+          'actType', 'consent'
         ])
         && data.name is string && data.name.size() > 0 && data.name.size() <= 120
         && data.initials is string && data.initials.size() >= 1 && data.initials.size() <= 4
@@ -322,7 +341,8 @@ service cloud.firestore {
         && data.uploadToken.matches('^[A-Za-z0-9]{8,64}$')
         && isOptionalTimestamp(data.linkGeneratedAt)
         && isOptionalTimestamp(data.submittedAt)
-        && (!('actType' in data) || data.actType in ['live', 'dj']);
+        && (!('actType' in data) || data.actType in ['live', 'dj'])
+        && consentOk(data);
     }
 
     function kitExists(artistId) {
@@ -355,7 +375,7 @@ service cloud.firestore {
           'upload_link_opened', 'returned_visit', 'media_added', 'bio_edited',
           'links_added', 'assets_saved', 'preview_shown', 'gift_link_copied',
           'private_link_copied', 'waitlist_answered', 'public_kit_viewed',
-          'staff_asset_downloaded'
+          'staff_asset_downloaded', 'consent_given'
         ]
         && data.sessionId is string
         && data.sessionId.matches('^[A-Za-z0-9-]{8,64}$')
@@ -392,10 +412,16 @@ service cloud.firestore {
         && data.ts == request.time;
     }
 
+    // An artist can record or refresh consent from their link, but cannot delete it.
+    function consentKept() {
+      return !('consent' in resource.data) || ('consent' in request.resource.data);
+    }
+
     function anonymousTokenEdit() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt'
-      ]);
+        'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt', 'consent'
+      ])
+        && consentKept();
     }
 
     match /{document=**} {

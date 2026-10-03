@@ -20,6 +20,7 @@ import {
   fromTokenDoc,
   overlayToken,
   publicSignature,
+  CONSENT_VERSION,
   saveArtistRecord,
   saveOverlayRecord,
   saveTokenRecord,
@@ -303,7 +304,12 @@ export function ArtistsProvider({ children }) {
   }, [artists, persist, user])
 
   const submitAssets = useCallback((id) => {
-    replaceArtist(id, (artist) => ({ ...artist, submittedAt: Date.now() }))
+    const agreedAt = Date.now()
+    replaceArtist(id, (artist) => ({
+      ...artist,
+      submittedAt: agreedAt,
+      consent: { agreedAt, version: CONSENT_VERSION },
+    }))
   }, [replaceArtist])
 
   const deleteArtist = useCallback((id) => {

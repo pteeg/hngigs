@@ -1,16 +1,42 @@
 import { useState } from 'react'
 import MediaPreviewModal from './MediaPreviewModal'
 import MediaWall from './MediaWall'
-import { SOCIAL_KINDS, downloadPressKit, pressKitData } from '../lib/pressKit'
+import { SOCIAL_KINDS, downloadPressKit, pressKitData, staffPreviewNote } from '../lib/pressKit'
 import {
   IconBrandInstagram,
   IconBrandSpotify,
   IconBrandYoutube,
   IconCheck,
+  IconCircleDashed,
   IconCopy,
   IconDownload,
+  IconEye,
   IconMail,
 } from '@tabler/icons-react'
+
+const CONSENT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function formatConsentDate(ms) {
+  const date = new Date(ms)
+  return `${date.getDate()} ${CONSENT_MONTHS[date.getMonth()]} ${date.getFullYear()}`
+}
+
+function PermissionChip({ consent }) {
+  if (!consent?.agreedAt) {
+    return (
+      <span className="pk-permission is-missing">
+        <IconCircleDashed size={14} stroke={1.8} aria-hidden="true" />
+        No permission recorded
+      </span>
+    )
+  }
+  return (
+    <span className="pk-permission is-granted">
+      <IconCheck size={14} stroke={2.2} aria-hidden="true" />
+      Permission granted · {formatConsentDate(consent.agreedAt)}
+    </span>
+  )
+}
 
 const SOCIAL_ICONS = {
   instagram: IconBrandInstagram,
@@ -54,7 +80,7 @@ export default function PressKitView({
   publicView = false,
   preview = false,
   allowDownload = true,
-  heroActions = null,
+  staffActions = null,
   onDownload,
 }) {
   const [downloading, setDownloading] = useState(false)
@@ -94,6 +120,16 @@ export default function PressKitView({
 
   const kit = (
     <div className={'pk' + (publicView ? ' pk-is-public' : '') + (preview ? ' pk-is-preview' : '')}>
+      {staffActions && (
+        <div className="pk-staff-bar">
+          <span className="pk-staff-bar-note">
+            <IconEye size={16} stroke={1.6} aria-hidden="true" />
+            {staffPreviewNote(artist)}
+          </span>
+          <PermissionChip consent={artist.consent} />
+          {staffActions}
+        </div>
+      )}
       <div className="pk-body">
         <div className="pk-brand">
           <img src="/HN%20logo.png" alt="" className="pk-brand-logo" />
@@ -103,7 +139,6 @@ export default function PressKitView({
 
         <header className="pk-hero">
           {heroPhoto && <img src={heroPhoto.url} alt="" className="pk-hero-img" />}
-          {heroActions}
           <div className="pk-hero-overlay">
             <div className="pk-hero-text">
               {tagline && <div className="pk-tagline">{tagline}</div>}

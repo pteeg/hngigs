@@ -26,6 +26,20 @@ export function pressKitData(artist) {
   return { bio, email, photos, videos, youtubeLinks, socials }
 }
 
+export function staffPreviewNote(artist) {
+  const { bio, email, photos, videos, youtubeLinks, socials } = pressKitData(artist)
+  const missing = []
+  if (!bio) missing.push('bio')
+  if (photos.length === 0) missing.push('photos')
+  if (videos.length === 0 && youtubeLinks.length === 0) missing.push('videos')
+  if (socials.length === 0) missing.push('socials')
+  if (!email) missing.push('contact')
+  if (missing.length === 0) return 'Public preview. This is what promoters and press see.'
+  const noun = missing.length === 1 ? 'section' : 'sections'
+  const verb = missing.length === 1 ? 'stays' : 'stay'
+  return `Public preview. ${missing.length} ${noun} (${missing.join(', ')}) ${verb} hidden until received.`
+}
+
 export function bioFile(artist) {
   return `Bio:\n${pressKitData(artist).bio}\n`
 }
