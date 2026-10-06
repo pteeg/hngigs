@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { IconChevronLeft, IconChevronRight, IconPhoto, IconPlayerPlay, IconX } from '@tabler/icons-react'
 
 export default function MediaPreviewModal({ media = [], startIndex = 0, onClose }) {
-  const count = media.length
-  const [index, setIndex] = useState(() => Math.min(Math.max(startIndex, 0), Math.max(count - 1, 0)))
+  const items = media.filter((item) => item.type !== 'audio')
+  const count = items.length
+  const [index, setIndex] = useState(() => {
+    const target = media[startIndex]
+    const found = target && target.type !== 'audio' ? items.indexOf(target) : 0
+    return Math.min(Math.max(found, 0), Math.max(count - 1, 0))
+  })
   const [playing, setPlaying] = useState(false)
   const videoRef = useRef(null)
-  const item = media[index]
+  const item = items[index]
 
   useEffect(() => {
     setPlaying(false)

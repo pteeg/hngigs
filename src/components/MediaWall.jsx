@@ -93,11 +93,12 @@ function YoutubeTile({ link }) {
 
 export default function MediaWall({ media, youtubeLinks, onOpen, onDownloadPhotos, downloading }) {
   const [filter, setFilter] = useState('all')
-  const photoCount = media.filter((m) => m.type === 'photo').length
-  const videoCount = media.length - photoCount + youtubeLinks.length
-  const canDownloadPhotos = Boolean(onDownloadPhotos) && media.some((m) => m.type === 'photo' && m.url)
+  const wall = media.filter((m) => m.type === 'photo' || m.type === 'video')
+  const photoCount = wall.filter((m) => m.type === 'photo').length
+  const videoCount = wall.filter((m) => m.type === 'video').length + youtubeLinks.length
+  const canDownloadPhotos = Boolean(onDownloadPhotos) && wall.some((m) => m.type === 'photo' && m.url)
 
-  const visible = filter === 'all' ? media : media.filter((m) => m.type === filter)
+  const visible = filter === 'all' ? wall : wall.filter((m) => m.type === filter)
   const showLinks = filter !== 'photo'
 
   return (

@@ -34,10 +34,12 @@ rules_version = '2';
 //   - gigs: int 0-10000
 //   - assets: "received" | "partial" | "sent" | "none"
 //   - contact: map email, phone, instagram, spotify, youtube
-//   - media: list <= 6 of {type, label, url}; url is a Firebase Storage download URL
-//     (media/{artistId}/..., see storage.rules) or a legacy inline data URL
+//   - media: list <= 8 of {type, label, url}; type is "photo", "video" or "audio".
+//     url is a Firebase Storage download URL (media/{artistId}/..., see storage.rules)
+//     or a legacy inline data URL
 //   - links: list <= 8 of {url, label}
-//   - gigHistory: list <= 8 of {date, name}
+//   - gigHistory: list <= 8 of {name, date}. name is the venue (required).
+//     date is free text and may be empty. Artists may edit this from their link.
 //   - uploadToken: string 8-64
 //   - linkGeneratedAt, submittedAt: timestamp or null
 //   - consent: optional map {agreedAt: timestamp, version: "v1", "v2", …}
@@ -165,7 +167,7 @@ service cloud.firestore {
     function isValidMediaItem(item) {
       return item is map
         && item.keys().hasOnly(['type', 'label', 'url'])
-        && item.type in ['photo', 'video']
+        && item.type in ['photo', 'video', 'audio']
         && item.label is string
         && item.label.size() <= 200
         && isValidMediaUrl(item.url);
@@ -183,7 +185,6 @@ service cloud.firestore {
       return item is map
         && item.keys().hasOnly(['date', 'name'])
         && item.date is string
-        && item.date.size() > 0
         && item.date.size() <= 40
         && item.name is string
         && item.name.size() > 0
@@ -192,14 +193,16 @@ service cloud.firestore {
 
     function mediaItemsOk(items) {
       return items is list
-        && items.size() <= 6
+        && items.size() <= 8
         && mediaUrlBudgetOk(items)
         && (items.size() < 1 || isValidMediaItem(items[0]))
         && (items.size() < 2 || isValidMediaItem(items[1]))
         && (items.size() < 3 || isValidMediaItem(items[2]))
         && (items.size() < 4 || isValidMediaItem(items[3]))
         && (items.size() < 5 || isValidMediaItem(items[4]))
-        && (items.size() < 6 || isValidMediaItem(items[5]));
+        && (items.size() < 6 || isValidMediaItem(items[5]))
+        && (items.size() < 7 || isValidMediaItem(items[6]))
+        && (items.size() < 8 || isValidMediaItem(items[7]));
     }
 
     function mediaUrlBudgetOk(items) {
@@ -209,6 +212,8 @@ service cloud.firestore {
         + (items.size() < 4 ? 0 : items[3].url.size())
         + (items.size() < 5 ? 0 : items[4].url.size())
         + (items.size() < 6 ? 0 : items[5].url.size())
+        + (items.size() < 7 ? 0 : items[6].url.size())
+        + (items.size() < 8 ? 0 : items[7].url.size())
         <= 700000;
     }
 
@@ -419,7 +424,7 @@ service cloud.firestore {
 
     function anonymousTokenEdit() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt', 'consent'
+        'bio', 'tagline', 'media', 'links', 'contact', 'assets', 'submittedAt', 'consent', 'gigHistory'
       ])
         && consentKept();
     }

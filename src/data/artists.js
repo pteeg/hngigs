@@ -288,6 +288,31 @@ export function isYoutubeUrl(url) {
   return /youtu\.be|youtube\.com/i.test(url || '')
 }
 
+export function audioLinkKind(url) {
+  let parsed
+  try {
+    parsed = new URL(withHttps(url))
+  } catch {
+    return null
+  }
+  const host = parsed.hostname.replace(/^www\./, '').toLowerCase()
+  const path = parsed.pathname.toLowerCase()
+  if (host === 'soundcloud.com' || host.endsWith('.soundcloud.com')) return 'SoundCloud'
+  if (host === 'bandcamp.com' || host.endsWith('.bandcamp.com')) return 'Bandcamp'
+  if ((host === 'spotify.com' || host.endsWith('.spotify.com')) && /\/track\/[^/]+/.test(path)) return 'Spotify'
+  return null
+}
+
+export function linkSource(url) {
+  try {
+    const parsed = new URL(withHttps(url))
+    const host = parsed.hostname.replace(/^www\./, '')
+    return `${host}${parsed.pathname.replace(/\/$/, '')}`
+  } catch {
+    return url || ''
+  }
+}
+
 export function linkLabel(link) {
   const label = link?.label?.trim()
   if (label) return label
@@ -314,7 +339,8 @@ export function assetFlags(artist) {
   return {
     bio: Boolean(artist?.bio?.trim()),
     photos: media.some((m) => m.type === 'photo'),
-    videos: media.some((m) => m.type === 'video') || links.some((l) => isYoutubeUrl(l.url)),
+    videos: media.some((m) => m.type === 'video' || m.type === 'audio')
+      || links.some((l) => isYoutubeUrl(l.url) || audioLinkKind(l.url)),
   }
 }
 

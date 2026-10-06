@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import MediaPreviewModal from './MediaPreviewModal'
 import MediaWall from './MediaWall'
-import { SOCIAL_KINDS, downloadPressKit, pressKitData, staffPreviewNote } from '../lib/pressKit'
+import { linkLabel, linkSource } from '../data/artists'
+import { formatClock, toggleAudio, useAudioPlayer } from '../lib/audioPlayer'
+import { SOCIAL_KINDS, downloadPressKit, listenLinksOf, pressKitData, staffPreviewNote } from '../lib/pressKit'
 import {
+  IconArrowUpRight,
   IconBrandInstagram,
   IconBrandSpotify,
   IconBrandYoutube,
@@ -12,6 +15,9 @@ import {
   IconDownload,
   IconEye,
   IconMail,
+  IconMusic,
+  IconPlayerPauseFilled,
+  IconPlayerPlayFilled,
 } from '@tabler/icons-react'
 
 const CONSENT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -53,6 +59,162 @@ async function copyText(text) {
   }
 }
 
+const WAVE_BARS = [8, 16, 24, 12, 28, 16, 32, 20, 10, 24, 14, 30, 18, 8, 22, 12, 26, 16, 6]
+
+function trackTitle(label) {
+  const name = (label || 'Audio').trim()
+  return name.replace(/\.(mp3|wav|m4a|aac|flac|ogg|aiff|aif|wma|opus|webm|mp4)$/i, '') || name
+}
+
+function Waveform({ progress }) {
+  const played = Math.round(Math.min(1, Math.max(0, progress)) * WAVE_BARS.length)
+  return (
+    <svg className="pk-wave" viewBox="0 0 114 40" aria-hidden="true">
+      {WAVE_BARS.map((height, index) => {
+        const x = 3 + index * 6
+        const y = (40 - height) / 2
+        return (
+          <path
+            key={index}
+            d={`M${x} ${y}v${height}`}
+            stroke={index < played ? 'var(--ink)' : 'var(--line-dash)'}
+          />
+        )
+      })}
+    </svg>
+  )
+}
+
+function useTrackDuration(url) {
+  const [duration, setDuration] = useState(0)
+  useEffect(() => {
+    if (!url) return undefined
+    const audio = new Audio()
+    audio.preload = 'metadata'
+    const onMeta = () => {
+      if (Number.isFinite(audio.duration)) setDuration(audio.duration)
+    }
+    audio.addEventListener('loadedmetadata', onMeta)
+    audio.src = url
+    return () => {
+      audio.removeEventListener('loadedmetadata', onMeta)
+      audio.src = ''
+    }
+  }, [url])
+  return duration
+}
+
+function ListenTrack({ item, player, allowDownload }) {
+  const [saving, setSaving] = useState(false)
+  const storedDuration = useTrackDuration(item.url)
+  const title = trackTitle(item.label)
+  const active = player.url === item.url
+  const playing = active && player.playing
+  const duration = active && player.duration ? player.duration : storedDuration
+  const current = active ? player.currentTime : 0
+  const progress = duration > 0 ? Math.min(1, current / duration) : 0
+  const elapsed = formatClock(current)
+  const total = formatClock(duration)
+  const started = playing || current > 0.25
+
+  async function download() {
+    if (!allowDownload || saving) return
+    setSaving(true)
+    try {
+      const blob = await (await fetch(item.url)).blob()
+      const file = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: item.label || `${title}.mp3`,
+      })
+      document.body.appendChild(file)
+      file.click()
+      file.remove()
+      window.setTimeout(() => URL.revokeObjectURL(file.href), 1000)
+    } catch {
+      // A file that can't be fetched stays on the card so the rest of the kit still works.
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className={'pk-listen-row' + (playing ? ' is-playing' : '')}>
+      <button
+        type="button"
+        className="pk-listen-play"
+        onClick={() => toggleAudio(item.url)}
+        aria-label={`${playing ? 'Pause' : 'Play'} ${title}`}
+      >
+        {playing ? <IconPlayerPauseFilled size={16} /> : <IconPlayerPlayFilled size={16} />}
+      </button>
+      <div className="pk-listen-text">
+        <span className="pk-listen-title">{title}</span>
+        <span className="pk-listen-source">Uploaded</span>
+        <span className="pk-listen-bar" aria-hidden="true">
+          <span style={{ width: `${Math.round(progress * 100)}%` }} />
+        </span>
+      </div>
+      <Waveform progress={playing || current > 0 ? progress : 0} />
+      <span className="pk-listen-time">
+        {started ? elapsed || '0:00' : total}
+        {started && total ? <span className="pk-listen-total"> / {total}</span> : null}
+      </span>
+      {allowDownload && (
+        <button
+          type="button"
+          className="pk-listen-download"
+          onClick={download}
+          disabled={saving}
+          aria-label={`Download ${title}`}
+        >
+          <IconDownload size={18} stroke={1.6} />
+        </button>
+      )}
+    </div>
+  )
+}
+
+function ListenCard({ tracks, links, allowDownload }) {
+  const player = useAudioPlayer()
+  const total = tracks.length + links.length
+  const countLabel = `${total} ${total === 1 ? 'track' : 'tracks'}`
+  return (
+    <section className="pk-card pk-listen" aria-label="Listen">
+      <div className="pk-listen-head">
+        <div className="pk-label">Listen</div>
+        <div className="pk-listen-count">{countLabel}</div>
+      </div>
+      {tracks.map((item, index) => (
+        <ListenTrack
+          key={item.url || `${item.label}-${index}`}
+          item={item}
+          player={player}
+          allowDownload={allowDownload}
+        />
+      ))}
+      {links.map((link, index) => (
+        <a
+          key={`${link.url}-${index}`}
+          className="pk-listen-link"
+          href={link.url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span className="pk-listen-mark" aria-hidden="true">
+            <IconMusic size={18} stroke={1.6} />
+          </span>
+          <span className="pk-listen-text">
+            <span className="pk-listen-title">{linkLabel(link)}</span>
+            <span className="pk-listen-source">{linkSource(link.url)}</span>
+          </span>
+          <span className="pk-listen-badge">{link.kind}</span>
+          <IconArrowUpRight className="pk-listen-arrow" size={16} stroke={1.6} aria-hidden="true" />
+        </a>
+      ))}
+    </section>
+  )
+}
+
 function CopyIconButton({ text, label, className = '' }) {
   const [copied, setCopied] = useState(false)
 
@@ -87,13 +249,17 @@ export default function PressKitView({
   const [previewItem, setPreviewItem] = useState(null)
   const [bioCopied, setBioCopied] = useState(false)
 
-  const { bio, email, photos, youtubeLinks, socials } = pressKitData(artist)
-  const canDownload = allowDownload && (artist.media.some((m) => m.url) || Boolean(bio))
+  const { bio, email, photos, videos, audio, youtubeLinks, socials } = pressKitData(artist)
+  const canDownload = allowDownload && ((artist.media ?? []).some((item) => item.url) || Boolean(bio))
   const heroPhoto = photos.find((p) => p.url)
   const tagline = artist.tagline?.trim()
   const instagram = socials.find((s) => s.key === 'instagram')
-  const hasPanel = Boolean(bio) || Boolean(instagram) || Boolean(email)
-  const hasWall = artist.media.length > 0 || youtubeLinks.length > 0
+  const gigs = (artist.gigHistory ?? []).filter((gig) => gig?.name)
+  const listenLinks = listenLinksOf(artist)
+  const hasPanel = Boolean(bio) || Boolean(instagram) || Boolean(email) || gigs.length > 0
+  const hasWall = photos.length > 0 || videos.length > 0 || youtubeLinks.length > 0
+  const hasListen = audio.length > 0 || listenLinks.length > 0
+  const hasMain = hasWall || hasListen
 
   async function download(options) {
     if (downloading) return
@@ -174,7 +340,7 @@ export default function PressKitView({
                   <button
                     type="button"
                     className="pk-download"
-                    title="Photos + videos (.zip) and bio (.md)"
+                    title="Photos, videos and audio (.zip) and bio (.md)"
                     onClick={downloadAll}
                     disabled={downloading}
                   >
@@ -193,14 +359,29 @@ export default function PressKitView({
           </div>
         </header>
 
-        {(hasPanel || hasWall) && (
-          <div className={'pk-grid' + (hasPanel && hasWall ? '' : ' is-single')}>
+        {(hasPanel || hasMain) && (
+          <div className={'pk-grid' + (hasPanel && hasMain ? '' : ' is-single')}>
             {hasPanel && (
               <aside className="pk-col pk-panel">
                 {bio && (
                   <section className="pk-card pk-about">
                     <div className="pk-label">About</div>
                     <p className="pk-bio">{bio}</p>
+                  </section>
+                )}
+
+                {gigs.length > 0 && (
+                  <section className="pk-card pk-played" aria-label="Played at">
+                    <div className="pk-played-head">
+                      <div className="pk-label">Played at</div>
+                      <div className="pk-label">{gigs.length}</div>
+                    </div>
+                    {gigs.map((gig, index) => (
+                      <div className="pk-played-row" key={`${gig.name}-${gig.date}-${index}`}>
+                        <span className="pk-played-name">{gig.name}</span>
+                        {gig.date ? <span className="pk-played-date">{gig.date}</span> : null}
+                      </div>
+                    ))}
                   </section>
                 )}
 
@@ -227,17 +408,22 @@ export default function PressKitView({
               </aside>
             )}
 
-            {hasWall && (
-              <MediaWall
-                media={artist.media}
-                youtubeLinks={youtubeLinks}
-                onOpen={(media, index) => {
-                  if (preview && !media[index].url) return
-                  setPreviewItem({ media, index })
-                }}
-                onDownloadPhotos={allowDownload ? () => download({ photosOnly: true }) : null}
-                downloading={downloading}
-              />
+            {hasMain && (
+              <div className="pk-col">
+                {hasListen && <ListenCard tracks={audio} links={listenLinks} allowDownload={allowDownload} />}
+                {hasWall && (
+                  <MediaWall
+                    media={artist.media}
+                    youtubeLinks={youtubeLinks}
+                    onOpen={(media, index) => {
+                      if (preview && !media[index].url) return
+                      setPreviewItem({ media, index })
+                    }}
+                    onDownloadPhotos={allowDownload ? () => download({ photosOnly: true }) : null}
+                    downloading={downloading}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}

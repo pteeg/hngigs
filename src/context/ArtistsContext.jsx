@@ -38,6 +38,7 @@ export function ArtistsProvider({ children }) {
   const [ready, setReady] = useState(false)
   const pending = useRef(new Map())
   const artistsRef = useRef([])
+  const lastWrite = useRef(Promise.resolve())
 
   useEffect(() => {
     artistsRef.current = artists
@@ -88,6 +89,22 @@ export function ArtistsProvider({ children }) {
     let cancelled = false
     let unsubArtists = () => {}
     let unsubTokens = () => {}
+    let tokenDocs = []
+
+    // Artist edits land on token documents. Fold them into the staff copy whenever either list
+    // changes, so the order the two snapshots arrive in doesn't matter.
+    function foldTokens(list) {
+      for (const tokenArtist of tokenDocs) {
+        const current = list.find((artist) => artist.id === tokenArtist.id)
+        if (!current || pending.current.has(current.id)) continue
+        const next = overlayToken(current, tokenArtist)
+        if (publicSignature(current) === publicSignature(next)) continue
+        pending.current.set(next.id, next)
+        saveOverlayRecord(next)
+          .catch((error) => console.error('Could not fold artist edits into the staff copy', error))
+          .finally(() => pending.current.delete(next.id))
+      }
+    }
     setReady(false)
 
     ensureStaffProfile(user)
@@ -97,7 +114,9 @@ export function ArtistsProvider({ children }) {
         unsubArtists = onSnapshot(
           collection(db, 'artists'),
           (snap) => {
-            applyRemote(snap.docs.map((item) => fromArtistDoc(item.id, item.data())))
+            const list = snap.docs.map((item) => fromArtistDoc(item.id, item.data()))
+            applyRemote(list)
+            foldTokens(list)
             setReady(true)
           },
           (error) => {
@@ -109,18 +128,10 @@ export function ArtistsProvider({ children }) {
           },
         )
         unsubTokens = onSnapshot(collection(db, 'tokens'), (snap) => {
-          snap.docs.forEach((item) => {
-            if (item.metadata.hasPendingWrites) return
-            const tokenArtist = fromTokenDoc(item.id, item.data())
-            const current = artistsRef.current.find((artist) => artist.id === tokenArtist.id)
-            if (!current || pending.current.has(current.id)) return
-            const next = overlayToken(current, tokenArtist)
-            if (publicSignature(current) === publicSignature(next)) return
-            pending.current.set(next.id, next)
-            saveOverlayRecord(next)
-              .catch(() => {})
-              .finally(() => pending.current.delete(next.id))
-          })
+          tokenDocs = snap.docs
+            .filter((item) => !item.metadata.hasPendingWrites)
+            .map((item) => fromTokenDoc(item.id, item.data()))
+          foldTokens(artistsRef.current)
         })
       })
       .catch((error) => {
@@ -200,7 +211,9 @@ export function ArtistsProvider({ children }) {
     const next = recipe(current)
     artistsRef.current = artistsRef.current.map((artist) => (artist.id === id ? next : artist))
     setArtists((list) => list.map((artist) => (artist.id === id ? next : artist)))
-    persist(next)
+    const write = persist(next)
+    write.catch(() => {})
+    lastWrite.current = write
     return next
   }, [persist])
 
@@ -208,10 +221,12 @@ export function ArtistsProvider({ children }) {
     const artist = artistsRef.current.find((item) => item.id === id)
     if (!artist) return null
     const item = await uploadMediaFile(artist, file, onProgress)
-    return replaceArtist(id, (current) => {
+    const next = replaceArtist(id, (current) => {
       const media = [...current.media, item]
       return { ...current, media, assets: assetsFromArtist({ ...current, media }) }
     })
+    await lastWrite.current
+    return next
   }, [replaceArtist])
 
   const removeMedia = useCallback((id, index) => {
@@ -232,6 +247,10 @@ export function ArtistsProvider({ children }) {
 
   const updateContact = useCallback((id, contact) => {
     replaceArtist(id, (artist) => ({ ...artist, contact: { ...artist.contact, ...contact } }))
+  }, [replaceArtist])
+
+  const updateGigHistory = useCallback((id, gigHistory) => {
+    replaceArtist(id, (artist) => ({ ...artist, gigHistory }))
   }, [replaceArtist])
 
   const addLink = useCallback((id, link) => {
@@ -303,13 +322,21 @@ export function ArtistsProvider({ children }) {
     return next
   }, [artists, persist, user])
 
-  const submitAssets = useCallback((id) => {
+  // Resolves true once the save has reached the database, false if it was rejected.
+  const submitAssets = useCallback(async (id) => {
     const agreedAt = Date.now()
-    replaceArtist(id, (artist) => ({
+    const next = replaceArtist(id, (artist) => ({
       ...artist,
       submittedAt: agreedAt,
       consent: { agreedAt, version: CONSENT_VERSION },
     }))
+    if (!next) return false
+    try {
+      await lastWrite.current
+      return true
+    } catch {
+      return false
+    }
   }, [replaceArtist])
 
   const deleteArtist = useCallback((id) => {
@@ -335,6 +362,7 @@ export function ArtistsProvider({ children }) {
       removeMedia,
       updateBio,
       updateContact,
+      updateGigHistory,
       addLink,
       removeLink,
       saveArtist,
@@ -352,6 +380,7 @@ export function ArtistsProvider({ children }) {
       removeMedia,
       updateBio,
       updateContact,
+      updateGigHistory,
       addLink,
       removeLink,
       saveArtist,

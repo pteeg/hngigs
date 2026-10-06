@@ -2,7 +2,7 @@ import { doc, writeBatch, setDoc, Timestamp } from 'firebase/firestore'
 import { actTypeOf, assetsFromArtist, withHttps } from '../data/artists'
 import { db } from './firebase'
 
-const MAX_MEDIA = 6
+const MAX_MEDIA = 8
 const MAX_LINKS = 8
 const MAX_GIGS = 8
 const MAX_URL_BUDGET = 700000
@@ -30,11 +30,12 @@ function trimMedia(media) {
   let budget = MAX_URL_BUDGET
   return (media ?? []).slice(0, MAX_MEDIA).map((item) => {
     const raw = typeof item?.url === 'string' ? item.url : ''
-    const allowed = raw === '' || raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:image/') || raw.startsWith('data:video/')
+    const allowed = raw === '' || raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:image/') || raw.startsWith('data:video/') || raw.startsWith('data:audio/')
     const url = allowed && raw.length <= budget ? raw : ''
     budget -= url.length
+    const type = item?.type === 'video' || item?.type === 'audio' ? item.type : 'photo'
     return {
-      type: item?.type === 'video' ? 'video' : 'photo',
+      type,
       label: text(item?.label, 200),
       url,
     }
@@ -50,8 +51,8 @@ function trimLinks(links) {
 
 function trimGigs(gigHistory) {
   return (gigHistory ?? [])
-    .map((gig) => ({ date: text(gig?.date, 40), name: text(gig?.name, 120) }))
-    .filter((gig) => gig.date && gig.name)
+    .map((gig) => ({ date: text(gig?.date, 40).trim(), name: text(gig?.name, 120).trim() }))
+    .filter((gig) => gig.name)
     .slice(0, MAX_GIGS)
 }
 
@@ -200,6 +201,7 @@ export function fromTokenDoc(token, data) {
   artist.contact.email = typeof data.contact?.email === 'string' ? data.contact.email : null
   artist.contact.phone = typeof data.contact?.phone === 'string' ? data.contact.phone : null
   artist.consent = trimConsent(data.consent)
+  artist.gigHistory = Array.isArray(data.gigHistory) ? trimGigs(data.gigHistory) : null
   return artist
 }
 
@@ -218,6 +220,7 @@ export function publicSignature(artist) {
     spotify: ready.contact.spotify,
     youtube: ready.contact.youtube,
     consent: ready.consent,
+    gigHistory: ready.gigHistory,
   })
 }
 
@@ -239,6 +242,7 @@ export function overlayToken(artist, tokenArtist) {
       youtube: tokenArtist.contact?.youtube || '',
     },
     consent: tokenArtist.consent ?? artist.consent ?? null,
+    gigHistory: tokenArtist.gigHistory ?? artist.gigHistory ?? [],
   })
 }
 

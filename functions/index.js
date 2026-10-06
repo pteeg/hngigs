@@ -38,6 +38,28 @@ export function publicKitFrom(token) {
   }
 }
 
+// Fields an artist can change from their link, copied onto the staff record with dot paths so
+// staff-only fields (name, gigs, link date, upload token, act type) are left alone.
+export function staffFieldsFrom(token) {
+  const fields = {
+    'contact.instagram': token.contact?.instagram ?? '',
+    'contact.spotify': token.contact?.spotify ?? '',
+    'contact.youtube': token.contact?.youtube ?? '',
+    submittedAt: token.submittedAt ?? null,
+  }
+  for (const key of ['tagline', 'bio', 'assets']) {
+    if (typeof token[key] === 'string') fields[key] = token[key]
+  }
+  for (const key of ['media', 'links', 'gigHistory']) {
+    if (Array.isArray(token[key])) fields[key] = token[key]
+  }
+  for (const key of ['email', 'phone']) {
+    if (typeof token.contact?.[key] === 'string') fields[`contact.${key}`] = token.contact[key]
+  }
+  if (token.consent && typeof token.consent === 'object') fields.consent = token.consent
+  return fields
+}
+
 export const syncPublicKit = onDocumentWritten(
   { document: 'tokens/{token}', database: 'hngigs', region: 'europe-west2' },
   async (event) => {
@@ -61,6 +83,14 @@ export const syncPublicKit = onDocumentWritten(
     if (!artistSnap.exists || artistSnap.get('uploadToken') !== token) return
 
     await db.collection('publicKits').doc(artistId).set(publicKitFrom(data))
+
+    // Also update the staff record here, so an artist's save reaches the venue's list even when
+    // no staff browser is open to fold it in. Never fail the kit sync over this.
+    try {
+      await db.collection('artists').doc(artistId).update(staffFieldsFrom(data))
+    } catch (error) {
+      logger.error('Could not update the staff record from the token', { token, artistId, error: String(error) })
+    }
   },
 )
 

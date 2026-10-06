@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useArtists } from '../context/ArtistsContext'
 import AssetLinks from '../components/AssetLinks'
 import MediaPreviewModal from '../components/MediaPreviewModal'
 import UploadDone from '../components/UploadDone'
-import { MAX_MEDIA, mediaProblem } from '../lib/media'
+import { formatClock, stopAudio, toggleAudio, useAudioPlayer } from '../lib/audioPlayer'
+import { MAX_AUDIO_MB, MAX_MEDIA, MAX_PHOTO_MB, MAX_VIDEO_MB, mediaProblem, mediaTypeOf } from '../lib/media'
 import { track, trackOncePerSession } from '../lib/track'
 import { isValidWaitlistEmail } from '../lib/waitlist'
 import {
@@ -13,11 +14,37 @@ import {
   IconBrandYoutube,
   IconCheck,
   IconEye,
+  IconInfoCircle,
   IconMail,
+  IconMusic,
   IconPhoto,
+  IconPlayerPauseFilled,
+  IconPlayerPlayFilled,
+  IconPlus,
   IconUpload,
   IconX,
 } from '@tabler/icons-react'
+
+const VENUE_LIMIT = 8
+let gigSeq = 0
+
+function gigKey() {
+  gigSeq += 1
+  return `gig-${gigSeq}`
+}
+
+function gigsToSave(rows) {
+  return rows
+    .map((row) => ({ name: row.name.trim(), date: row.date.trim() }))
+    .filter((row) => row.name)
+    .slice(0, VENUE_LIMIT)
+}
+
+function rowsFromHistory(history) {
+  return (history ?? [])
+    .filter((gig) => gig?.name)
+    .map((gig) => ({ key: gigKey(), name: gig.name, date: gig.date || '' }))
+}
 
 const CONSENT_COPY = 'By uploading, I confirm I own or have the right to share this content, and I grant Hot Numbers and its promoters permission to use it to promote my performances, including on social media.'
 
@@ -29,13 +56,168 @@ const SOCIALS = [
 
 function countFiles(files) {
   const list = Array.from(files)
-  const videos = list.filter((file) => file.type.startsWith('video/')).length
-  return { photos: list.length - videos, videos }
+  return {
+    photos: list.filter((file) => file.type.startsWith('image/')).length,
+    videos: list.filter((file) => file.type.startsWith('video/')).length,
+    audio: list.filter((file) => file.type.startsWith('audio/')).length,
+  }
+}
+
+function useAudioDuration(url) {
+  const [duration, setDuration] = useState('')
+  useEffect(() => {
+    if (!url) return undefined
+    const audio = new Audio()
+    audio.preload = 'metadata'
+    const onMeta = () => setDuration(formatClock(audio.duration))
+    audio.addEventListener('loadedmetadata', onMeta)
+    audio.src = url
+    return () => {
+      audio.removeEventListener('loadedmetadata', onMeta)
+      audio.src = ''
+    }
+  }, [url])
+  return duration
+}
+
+function useFinePointer() {
+  const [fine, setFine] = useState(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  useEffect(() => {
+    const query = window.matchMedia('(hover: hover) and (pointer: fine)')
+    const sync = () => setFine(query.matches)
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [])
+  return fine
+}
+
+function UploadLimitsNote() {
+  const noteId = useId()
+  const rootRef = useRef(null)
+  const finePointer = useFinePointer()
+  const [pinned, setPinned] = useState(false)
+  const [hovering, setHovering] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const [suppress, setSuppress] = useState(false)
+  const open = pinned || (finePointer && !suppress && (hovering || focused))
+  const openBeforePress = useRef(false)
+
+  useEffect(() => {
+    if (!open) return undefined
+    function onPointerDown(event) {
+      if (!rootRef.current?.contains(event.target)) {
+        setPinned(false)
+        setHovering(false)
+        setFocused(false)
+        setSuppress(false)
+      }
+    }
+    function onKeyDown(event) {
+      if (event.key !== 'Escape') return
+      setPinned(false)
+      setHovering(false)
+      setFocused(false)
+      setSuppress(true)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  function onPressStart() {
+    openBeforePress.current = open
+  }
+
+  function onClick() {
+    if (openBeforePress.current) {
+      setPinned(false)
+      setFocused(false)
+      setSuppress(true)
+    } else {
+      setPinned(true)
+      setSuppress(false)
+    }
+  }
+
+  return (
+    <div
+      className="upload-limits"
+      ref={rootRef}
+      onMouseEnter={() => {
+        if (finePointer && !suppress) setHovering(true)
+      }}
+      onMouseLeave={() => {
+        setHovering(false)
+        setSuppress(false)
+      }}
+    >
+      <div className="field-label">Photos, videos &amp; audio</div>
+      <button
+        type="button"
+        className="upload-limits-btn"
+        aria-label="Upload limits"
+        aria-expanded={open}
+        aria-controls={noteId}
+        onMouseDown={onPressStart}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') onPressStart()
+        }}
+        onClick={onClick}
+        onFocus={() => {
+          if (!finePointer) return
+          setSuppress(false)
+          setFocused(true)
+        }}
+        onBlur={(event) => {
+          if (rootRef.current?.contains(event.relatedTarget)) return
+          setFocused(false)
+        }}
+      >
+        <IconInfoCircle size={16} stroke={1.8} />
+      </button>
+      {open && (
+        <p className="upload-limits-pop" id={noteId} role="note">
+          Up to {MAX_MEDIA} files. Photos up to {MAX_PHOTO_MB} MB, audio up to {MAX_AUDIO_MB} MB, video up to {MAX_VIDEO_MB} MB.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function AudioFileRow({ item, index, playing, onPlay, onRemove }) {
+  const duration = useAudioDuration(item.url)
+  const meta = duration ? `Audio · ${duration}` : 'Audio'
+  return (
+    <li>
+      <span className="upload-thumb is-audio" aria-hidden="true">
+        <IconMusic size={20} stroke={1.6} />
+      </span>
+      <span className="upload-item-copy">
+        <span className="upload-item-name">{item.label}</span>
+        <span className="upload-item-meta">{meta}</span>
+      </span>
+      <button type="button" className="upload-preview is-play" onClick={() => onPlay(item.url)}>
+        {playing ? <IconPlayerPauseFilled size={12} /> : <IconPlayerPlayFilled size={12} />}
+        {playing ? 'Pause' : 'Play'}
+      </button>
+      <button
+        type="button"
+        className="upload-remove"
+        onClick={() => onRemove(index)}
+        aria-label={`Remove ${item.label}`}
+      >
+        <IconX size={15} stroke={1.6} />
+      </button>
+    </li>
+  )
 }
 
 export default function ArtistUpload() {
   const { token } = useParams()
-  const { getArtistByToken, ready, uploadMedia, removeMedia, updateBio, updateContact, addLink, removeLink, submitAssets } = useArtists()
+  const { getArtistByToken, ready, uploadMedia, removeMedia, updateBio, updateContact, updateGigHistory, addLink, removeLink, submitAssets } = useArtists()
   const artist = getArtistByToken(token)
   const fileRef = useRef(null)
   const [previewIndex, setPreviewIndex] = useState(null)
@@ -55,10 +237,14 @@ export default function ArtistUpload() {
   const [emailError, setEmailError] = useState(false)
   const [agreed, setAgreed] = useState(Boolean(artist?.consent))
   const [consentError, setConsentError] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const [gigs, setGigs] = useState(() => rowsFromHistory(artist?.gigHistory))
   const [uploads, setUploads] = useState([])
   const [uploadNotice, setUploadNotice] = useState('')
+  const player = useAudioPlayer()
   const uploading = uploads.some((upload) => !upload.failed)
-  const unsaved = useRef({ artistId: null, bio: null, contact: null, timer: null })
+  const unsaved = useRef({ artistId: null, bio: null, contact: null, gigs: null, timer: null })
 
   // Fields are only loaded once per artist; later remote updates would clobber text still being typed.
   if (artist && loadedFor !== artist.id) {
@@ -72,6 +258,7 @@ export default function ArtistUpload() {
     setEmail(artist.contact.email ?? '')
     setAgreed(Boolean(artist.consent))
     setConsentError(false)
+    setGigs(rowsFromHistory(artist.gigHistory))
   }
 
   const flushRef = useRef(() => {})
@@ -81,9 +268,10 @@ export default function ArtistUpload() {
       window.clearTimeout(edits.timer)
       if (edits.artistId && edits.bio != null) updateBio(edits.artistId, edits.bio)
       if (edits.artistId && edits.contact) updateContact(edits.artistId, edits.contact)
-      unsaved.current = { artistId: null, bio: null, contact: null, timer: null }
+      if (edits.artistId && edits.gigs != null) updateGigHistory(edits.artistId, edits.gigs)
+      unsaved.current = { artistId: null, bio: null, contact: null, gigs: null, timer: null }
     }
-  }, [updateBio, updateContact])
+  }, [updateBio, updateContact, updateGigHistory])
 
   useEffect(() => {
     const flush = () => flushRef.current()
@@ -100,6 +288,7 @@ export default function ArtistUpload() {
     edits.artistId = artist.id
     if (edit.bio != null) edits.bio = edit.bio
     if (edit.contact) edits.contact = { ...edits.contact, ...edit.contact }
+    if (edit.gigs != null) edits.gigs = edit.gigs
     edits.timer = window.setTimeout(() => flushRef.current(), 600)
   }
 
@@ -119,20 +308,24 @@ export default function ArtistUpload() {
       const problem = mediaProblem(file)
       if (problem) problems.push(problem)
       else if (accepted.length < room) accepted.push(file)
-      else problems.push(`${file.name} wasn’t added. You can have up to ${MAX_MEDIA} photos and videos.`)
+      else problems.push(`${file.name} wasn’t added. You can add up to ${MAX_MEDIA} files.`)
     }
     setUploadNotice(problems.join(' '))
     if (!accepted.length) return
-    track('media_added', artist.id, countFiles(accepted))
+    const counts = countFiles(accepted)
+    track('media_added', artist.id, { photos: counts.photos, videos: counts.videos })
     setSavedFor(null)
     for (const file of accepted) {
       const key = `${Date.now()}-${Math.random()}`
       const patch = (change) =>
         setUploads((current) => current.map((upload) => (upload.key === key ? { ...upload, ...change } : upload)))
-      setUploads((current) => [...current, { key, name: file.name, progress: 0, failed: false }])
+      setUploads((current) => [...current, { key, name: file.name, progress: 0, failed: false, type: mediaTypeOf(file) }])
       uploadMedia(artist.id, file, (progress) => patch({ progress }))
         .then(() => setUploads((current) => current.filter((upload) => upload.key !== key)))
-        .catch(() => patch({ failed: true }))
+        .catch((error) => {
+          console.error('Upload failed', file.name, error)
+          patch({ failed: true })
+        })
     }
   }
 
@@ -179,6 +372,27 @@ export default function ArtistUpload() {
     return Boolean(clean) && !isValidWaitlistEmail(clean)
   }
 
+  function changeGig(index, patch) {
+    const next = gigs.map((gig, itemIndex) => (itemIndex === index ? { ...gig, ...patch } : gig))
+    setGigs(next)
+    setSavedFor(null)
+    if (artist) queueEdit({ gigs: gigsToSave(next) })
+  }
+
+  function addGig() {
+    if (gigs.length >= VENUE_LIMIT) return
+    const next = [...gigs, { key: gigKey(), name: '', date: '' }]
+    setGigs(next)
+    setSavedFor(null)
+  }
+
+  function removeGig(index) {
+    const next = gigs.filter((_, itemIndex) => itemIndex !== index)
+    setGigs(next)
+    setSavedFor(null)
+    if (artist) queueEdit({ gigs: gigsToSave(next) })
+  }
+
   function onConsentChange(event) {
     const next = event.target.checked
     setAgreed(next)
@@ -186,7 +400,8 @@ export default function ArtistUpload() {
     setSavedFor(null)
   }
 
-  function save() {
+  async function save() {
+    if (saving) return
     const emailBad = emailLooksWrong()
     if (emailBad) setEmailError(true)
     if (!agreed) {
@@ -194,8 +409,18 @@ export default function ArtistUpload() {
       return
     }
     if (emailBad) return
+    const savedGigs = gigsToSave(gigs)
+    setGigs(savedGigs.map((gig) => ({ key: gigKey(), ...gig })))
+    queueEdit({ gigs: savedGigs })
     flushRef.current()
-    submitAssets(artist.id)
+    setSaving(true)
+    setSaveError(false)
+    const ok = await submitAssets(artist.id)
+    setSaving(false)
+    if (!ok) {
+      setSaveError(true)
+      return
+    }
     track('assets_saved', artist.id, {
       media: artist.media.length,
       bioLength: bio.length,
@@ -325,11 +550,11 @@ export default function ArtistUpload() {
           </div>
 
           <div className="upload-section">
-            <div className="field-label">Photos &amp; Videos</div>
+            <UploadLimitsNote />
             <input
               ref={fileRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/*,video/*,audio/*"
               multiple
               hidden
               onChange={onFiles}
@@ -349,7 +574,7 @@ export default function ArtistUpload() {
                 <IconUpload size={18} stroke={2} />
               </span>
               <span className="dropzone-title">Add files</span>
-              <span className="dropzone-hint">Drop photos or videos here, or click to browse</span>
+              <span className="dropzone-hint">Drop photos, videos or audio here, or click to browse</span>
             </button>
             <AssetLinks
               links={artist.links}
@@ -362,47 +587,70 @@ export default function ArtistUpload() {
                 removeLink(artist.id, index)
                 setSavedFor(null)
               }}
-              buttonLabel="Add link to video"
+              buttonLabel="Add link to video or audio"
+              hint="YouTube, SoundCloud, Bandcamp, Spotify"
             >
               {artist.media.map((item, index) => (
-                <li key={item.url || item.label + index}>
-                  {item.url && item.type === 'photo' ? (
-                    <img src={item.url} alt="" />
-                  ) : item.url && item.type === 'video' ? (
-                    <video src={item.url} muted />
-                  ) : (
-                    <span className="upload-thumb" aria-hidden="true">
-                      <IconPhoto size={18} stroke={1.5} />
-                    </span>
-                  )}
-                  <span className="upload-item-name">{item.label}</span>
-                  <button
-                    type="button"
-                    className="upload-preview"
-                    onClick={() => setPreviewIndex(index)}
-                  >
-                    <IconEye size={14} stroke={1.6} />
-                    Preview
-                  </button>
-                  <button
-                    type="button"
-                    className="upload-remove"
-                    onClick={() => {
-                      removeMedia(artist.id, index)
+                item.type === 'audio' ? (
+                  <AudioFileRow
+                    key={item.url || item.label + index}
+                    item={item}
+                    index={index}
+                    playing={player.playing && player.url === item.url}
+                    onPlay={toggleAudio}
+                    onRemove={(mediaIndex) => {
+                      if (player.url === artist.media[mediaIndex]?.url) stopAudio()
+                      removeMedia(artist.id, mediaIndex)
                       setSavedFor(null)
                     }}
-                    aria-label={`Remove ${item.label}`}
-                  >
-                    <IconX size={15} stroke={1.6} />
-                  </button>
-                </li>
+                  />
+                ) : (
+                  <li key={item.url || item.label + index}>
+                    {item.url && item.type === 'photo' ? (
+                      <img src={item.url} alt="" />
+                    ) : item.url && item.type === 'video' ? (
+                      <video src={item.url} muted />
+                    ) : (
+                      <span className="upload-thumb" aria-hidden="true">
+                        <IconPhoto size={18} stroke={1.5} />
+                      </span>
+                    )}
+                    <span className="upload-item-name">{item.label}</span>
+                    <button
+                      type="button"
+                      className="upload-preview"
+                      onClick={() => setPreviewIndex(index)}
+                    >
+                      <IconEye size={14} stroke={1.6} />
+                      Preview
+                    </button>
+                    <button
+                      type="button"
+                      className="upload-remove"
+                      onClick={() => {
+                        removeMedia(artist.id, index)
+                        setSavedFor(null)
+                      }}
+                      aria-label={`Remove ${item.label}`}
+                    >
+                      <IconX size={15} stroke={1.6} />
+                    </button>
+                  </li>
+                )
               ))}
               {uploads.map((upload) => (
-                <li key={upload.key} className={'upload-progress' + (upload.failed ? ' is-failed' : '')}>
-                  <span className="upload-thumb" aria-hidden="true">
+                <li key={upload.key} className={'upload-progress' + (upload.failed ? ' is-failed' : '') + (upload.type === 'audio' ? ' is-audio' : '')}>
+                  <span className={'upload-thumb' + (upload.type === 'audio' ? ' is-audio' : '')} aria-hidden="true">
                     <IconUpload size={16} stroke={1.6} />
                   </span>
-                  <span className="upload-item-name">{upload.name}</span>
+                  {upload.type === 'audio' ? (
+                    <span className="upload-item-copy">
+                      <span className="upload-item-name">{upload.name}</span>
+                      <span className="upload-item-meta">{upload.failed ? 'Audio' : 'Audio · uploading'}</span>
+                    </span>
+                  ) : (
+                    <span className="upload-item-name">{upload.name}</span>
+                  )}
                   {upload.failed ? (
                     <>
                       <span className="upload-progress-text">Upload failed</span>
@@ -425,6 +673,55 @@ export default function ArtistUpload() {
               ))}
             </AssetLinks>
             {uploadNotice && <p className="upload-hint upload-notice">{uploadNotice}</p>}
+          </div>
+
+          <div className="upload-section venue-section">
+            <div className="venue-head">
+              <div className="field-label">Where you've played</div>
+              <div className="venue-count">{gigs.length} of {VENUE_LIMIT}</div>
+            </div>
+            <p className="venue-help">Venues and dates you've played. Promoters and audiences like to see where you've been.</p>
+            <div className="venue-list">
+              {gigs.map((gig, index) => (
+                <div className="venue-row" key={gig.key}>
+                  <input
+                    type="text"
+                    aria-label={`Venue ${index + 1}`}
+                    placeholder="Venue"
+                    value={gig.name}
+                    maxLength={120}
+                    onChange={(event) => changeGig(index, { name: event.target.value })}
+                  />
+                  <input
+                    type="text"
+                    aria-label={`Date ${index + 1}`}
+                    placeholder="Month and year"
+                    value={gig.date}
+                    maxLength={40}
+                    onChange={(event) => changeGig(index, { date: event.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="venue-remove"
+                    aria-label={`Remove venue ${index + 1}`}
+                    onClick={() => removeGig(index)}
+                  >
+                    <IconX size={16} stroke={1.6} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={addGig}
+                disabled={gigs.length >= VENUE_LIMIT}
+              >
+                <IconPlus size={16} stroke={1.5} />
+                Add another venue
+              </button>
+            </div>
           </div>
 
           <div className="upload-section consent-section">
@@ -454,11 +751,16 @@ export default function ArtistUpload() {
             type="button"
             className={'btn btn-primary btn-submit' + (agreed ? '' : ' is-inactive')}
             onClick={save}
-            disabled={uploading}
-            aria-disabled={!agreed || uploading}
+            disabled={uploading || saving}
+            aria-disabled={!agreed || uploading || saving}
           >
-            {uploading ? 'Uploading…' : 'Save'}
+            {uploading ? 'Uploading…' : saving ? 'Saving…' : 'Save'}
           </button>
+          {saveError && (
+            <p className="upload-hint" role="alert">
+              We couldn’t save that. Check your connection and press Save again.
+            </p>
+          )}
         </section>
       </div>
       {previewIndex != null && (

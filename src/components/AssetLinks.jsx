@@ -1,12 +1,13 @@
 import { Children, useState } from 'react'
 import { IconLink, IconPlayerPlay, IconX } from '@tabler/icons-react'
-import { isYoutubeUrl, linkLabel, withHttps } from '../data/artists'
+import { audioLinkKind, isYoutubeUrl, linkLabel, linkSource, withHttps } from '../data/artists'
 
 export default function AssetLinks({
   links = [],
   onAdd,
   onRemove,
   buttonLabel = 'Add link',
+  hint = '',
   extraActions,
   children,
 }) {
@@ -31,10 +32,13 @@ export default function AssetLinks({
       <div className="upload-media-actions">
         {extraActions}
         {!open && (
-          <button type="button" className="btn btn-outline" onClick={() => setOpen(true)}>
-            <IconLink size={16} stroke={1.5} />
-            {buttonLabel}
-          </button>
+          <>
+            <button type="button" className="btn btn-outline" onClick={() => setOpen(true)}>
+              <IconLink size={16} stroke={1.5} />
+              {buttonLabel}
+            </button>
+            {hint && <span className="upload-link-hint">{hint}</span>}
+          </>
         )}
       </div>
 
@@ -44,7 +48,7 @@ export default function AssetLinks({
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://youtube.com/…"
+            placeholder="https://…"
             autoFocus
           />
           <input
@@ -63,12 +67,13 @@ export default function AssetLinks({
       {(links.length > 0 || mediaItems.length > 0) && (
         <ul className="upload-list">
           {links.map((link, index) => {
-            const isVideo = isYoutubeUrl(link.url)
+            const kind = audioLinkKind(link.url)
+            const playable = isYoutubeUrl(link.url) || Boolean(kind)
             return (
               <li key={link.url + index}>
                 <a className="upload-item-main" href={link.url} target="_blank" rel="noreferrer">
-                  <span className={'asset-link-icon' + (isVideo ? ' is-video' : '')} aria-hidden="true">
-                    {isVideo ? (
+                  <span className={'asset-link-icon' + (playable ? ' is-video' : '')} aria-hidden="true">
+                    {playable ? (
                       <IconPlayerPlay size={16} stroke={1.8} />
                     ) : (
                       <IconLink size={16} stroke={1.5} />
@@ -76,7 +81,7 @@ export default function AssetLinks({
                   </span>
                   <span className="asset-link-text">
                     <span className="asset-link-label">{linkLabel(link)}</span>
-                    <span className="asset-link-url">{link.url}</span>
+                    <span className="asset-link-url">{kind ? linkSource(link.url) : link.url}</span>
                   </span>
                 </a>
                 {onRemove && (
